@@ -85,8 +85,7 @@ run.feature.test=TRUE # process features for test set
 Using cross-validation or independent test set evaluation, we compare the performance of models with different specifications. In this Starter Code, we tune parameter k (number of neighbours) for KNN.
 
 ```{r model_setup}
-k = c(5,11,21,31,41,51)
-model_labels = paste("KNN with K =", k)
+
 ```
 
 ### Step 2: import data and train-test split 
@@ -171,76 +170,12 @@ Call the train model and test model from library.
 
 + In this Starter Code, we use KNN to do classification. 
 
-```{r loadlib}
-
-```
 
 #### Model selection with cross-validation
-* Do model selection by choosing among different values of training model parameters.
-```{r runcv, eval=F}
-source("../xjx_lib/cross_validation_knn.R")
-if(run.cv){
-  err_cv <- matrix(0, nrow = length(k), ncol = 2)
-  for(i in 1:length(k)){
-    cat("k=", k[i], "\n")
-    err_cv[i,] <- cv.function(dat_train, K, k[i])
-  save(err_cv, file="../output/err_cv.RData")
-  }
-}
-```
-
-Visualize cross-validation results. 
-```{r cv_vis}
-if(run.cv){
-  load("../output/err_cv.RData")
-  err_cv <- as.data.frame(err_cv) 
-  colnames(err_cv) <- c("mean_error", "sd_error")
-  err_cv$k = as.factor(k)
-  err_cv %>% 
-    ggplot(aes(x = k, y = mean_error,
-               ymin = mean_error - sd_error, ymax = mean_error + sd_error)) + 
-    geom_crossbar() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-}
-
-```
-
-
-* Choose the "best" parameter value
-```{r best_model}
-if(run.cv){
-  model_best <- k[which.min(err_cv[,1])]
-}
-par_best <- list(k = model_best)
-```
 
 * Train the model with the entire training set using the selected model (model parameter) via cross-validation.
-```{r gbm_train}
-tm_train  = NA
-tm_train <- system.time(fit_train <- gbm_train(dat_train))
-save(fit_train, file="../output/fit_train_gbm.RData")
-```
 
 ### Step 5: Run test on test images
-```{r test}
-source("../xjx_lib/test_knn.R")
-tm_test=NA
-if(run.test){
-  load(file="../output/fit_train.RData")
-  tm_test <- system.time(pred <- test(model_best, dat_test))
-}
-```
-
-* evaluation
-```{r}
-accu <- mean(dat_test$emotion_idx == pred)
-cat("The accuracy of model:", model_labels[which.min(err_cv[,1])], "is", accu*100, "%.\n")
-
-library(caret)
-confusionMatrix(pred, dat_test$emotion_idx)
-```
-
-Note that the accuracy is not high but is better than that of ramdom guess(4.5%). 
 
 GBM
 
@@ -250,21 +185,13 @@ source("../xjx_lib/test_gbm.R")
 gbm_model = gbm_train(dat_train)[[1]]
 pred_gbm = gbm_test(gbm_model, dat_test)[[1]]
 pred_gbm_class = apply(pred_gbm,1,which.max)
-confusionMatrix(pred_gbm_class, dat_test$emotion_idx)
+confusionMatrix(factor(pred_gbm_class), dat_test$emotion_idx)
 ```
-
-
-
-
-
 
 ### Summarize Running Time
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
 ```{r running_time}
-cat("Time for constructing training features=", tm_feature_train[1], "s \n")
-cat("Time for constructing testing features=", tm_feature_test[1], "s \n")
-#cat("Time for training model=", tm_train[1], "s \n")
-cat("Time for testing model=", tm_test[1], "s \n")
+
 ```
 
 ###Reference
