@@ -183,10 +183,13 @@ GBM
 source("../xjx_lib/train_gbm.R")
 source("../xjx_lib/test_gbm.R")
 gbm_model = gbm_train(dat_train)[[1]]
+```
+```{r}
 pred_gbm = gbm_test(gbm_model, dat_test)[[1]]
 pred_gbm_class = apply(pred_gbm,1,which.max)
 confusionMatrix(factor(pred_gbm_class), dat_test$emotion_idx)
 ```
+
 
 ### Summarize Running Time
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
