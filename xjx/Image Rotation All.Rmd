@@ -166,8 +166,16 @@ end2 = Sys.time()
 (end2-begin2)*100
 ```
 
+```{r}
+begin3 = Sys.time()
+indices = 1:2500
+all_points = change_points(indices)
+end3 = Sys.time()
+```
 
-
+```{r}
+end3-begin3
+```
 
 
 
