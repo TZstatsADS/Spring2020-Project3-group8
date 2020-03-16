@@ -171,6 +171,7 @@ begin3 = Sys.time()
 indices = 1:2500
 all_points = change_points(indices)
 end3 = Sys.time()
+all_points = map(all_points, as.matrix)
 ```
 
 ```{r}

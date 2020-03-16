@@ -12,10 +12,14 @@ library(EBImage)
 ```
 
 ```{r}
-indices = 966
+indices = 1ÿ
 image.path_sub <- paste0(train_image_dir, sprintf("%04d", indices), ".jpg")
 image.list_sub = list(EBImage::readImage(image.path_sub))
 img = Image(image.list_sub[[1]], colormode = 'Color')
+display(img, method = 'raster')
+```
+
+```{r}
 display(img, method="raster")
 fiducial_pt_list_sub <- fiducial_pt_list[indices]
 add_point <- function(n){text(x = fiducial_pt_list_sub[[1]][n,1],

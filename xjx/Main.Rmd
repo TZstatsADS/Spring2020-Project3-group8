@@ -38,6 +38,12 @@ if(!require("caret")){
 if(!require("gbm")){
   install.packages("gbm")
 }
+if(!require("e1071")){
+  install.packages("e1071")
+}
+if(!require("geometry")){
+  install.packages("geometry")
+}
 
 library(R.matlab)
 library(readxl)
@@ -46,6 +52,8 @@ library(EBImage)
 library(ggplot2)
 library(caret)
 library(gbm)
+library(e1071)
+library(geometry)
 ```
 
 ### Step 0 set work directories
@@ -92,10 +100,14 @@ Using cross-validation or independent test set evaluation, we compare the perfor
 ```{r}
 #train-test split
 info <- read.csv(train_label_path)
-n <- nrow(info)
+n <- length(info$identity %>% unique())
 n_train <- round(n*(4/5), 0)
-train_idx <- sample(info$Index, n_train, replace = F)
+train_identity = sample(info$identity %>% unique(), n_train, replace = F)
+
+train_idx <- which(info$identity %in% train_identity == 1)
 test_idx <- setdiff(info$Index,train_idx)
+
+train_idx = sample(train_idx, length(train_idx), replace = F)
 ```
 
 If you choose to extract features from images, such as using Gabor filter, R memory will exhaust all images are read together. The solution is to repeat reading a smaller batch(e.g 100) and process them. 
@@ -143,16 +155,16 @@ and the midpoint of the upper lip(52).  For example, the distance of an happy fa
 source("../xjx_lib/feature.R")
 tm_feature_train <- NA
 if(run.feature.train){
-  tm_feature_train <- system.time(dat_train <- feature(fiducial_pt_list, train_idx))
+  tm_feature_train <- system.time(dat_train <- feature(all_points, train_idx))
 }
 
 tm_feature_test <- NA
 if(run.feature.test){
-  tm_feature_test <- system.time(dat_test <- feature(fiducial_pt_list, test_idx))
+  tm_feature_test <- system.time(dat_test <- feature(all_points, test_idx))
 }
 
-save(dat_train, file="../output/feature_train.RData")
-save(dat_test, file="../output/feature_test.RData")
+#save(dat_train, file="../output/feature_train.RData")
+#save(dat_test, file="../output/feature_test.RData")
 ```
 
 ### Step 4: Train a classification model with training features and responses
@@ -182,13 +194,90 @@ GBM
 ```{r}
 source("../xjx_lib/train_gbm.R")
 source("../xjx_lib/test_gbm.R")
-gbm_model = gbm_train(dat_train)[[1]]
+gbm_model = gbm_train(dat_train, 200, 0.8, 0.1, 3)[[1]]
 ```
+
 ```{r}
 pred_gbm = gbm_test(gbm_model, dat_test)[[1]]
 pred_gbm_class = apply(pred_gbm,1,which.max)
 confusionMatrix(factor(pred_gbm_class), dat_test$emotion_idx)
 ```
+
+```{r}
+mean(dat_test$emotion_idx == pred_gbm_class)
+```
+
+```{r}
+pred_gbm0 = gbm_test(gbm_model, dat_train)[[1]]
+pred_gbm_class0 = apply(pred_gbm0,1,which.max)
+mean(dat_train$emotion_idx == pred_gbm_class0)
+```
+
+ 6 groups
+
+```{r}
+g1 = c(1)
+g2 = c(2,8,9)
+g3 = c(3,10,15,19,22)
+g4 = c(4,11,14)
+g5 = c(5,7,12,17,18,20,21)
+g6 = c(6,13,16)
+```
+
+```{r}
+dat_train2 = dat_train %>% as_tibble %>% 
+  mutate(large_idx = 0) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g1, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g2, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g3, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g4, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g5, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g6, 1, large_idx)) %>% 
+  select(-emotion_idx) %>%
+  rename(emotion_idx = large_idx) %>%
+  as.data.frame()
+dat_test2 = dat_test %>% as_tibble %>% 
+  mutate(large_idx = 0) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g1, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g2, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g3, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g4, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g5, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g6, 1, large_idx)) %>% 
+  select(-emotion_idx) %>%
+  rename(emotion_idx = large_idx) %>%
+  as.data.frame()
+```
+
+```{r}
+gbm_model2 = gbm_train(dat_train2)[[1]]
+```
+
+```{r}
+pred_gbm2 = gbm_test(gbm_model2, dat_test2)[[1]]
+pred_gbm_class2 = apply(pred_gbm2,1,which.max)
+```
+
+```{r}
+mean(dat_test2$emotion_idx == pred_gbm_class2)
+```
+
+
+SVM
+
+```{r}
+source("../xjx_lib/train_SVM.R")
+source("../xjx_lib/test_SVM.R")
+svm_model = svm_train(dat_train, kernel = 'sigmoid')[[1]]
+```
+
+```{r}
+pred_svm = svm_test(svm_model, dat_test)[[1]]
+mean(dat_test$emotion_idx == pred_svm)
+```
+
+
+
 
 
 ### Summarize Running Time

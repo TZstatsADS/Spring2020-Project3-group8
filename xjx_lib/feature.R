@@ -157,7 +157,7 @@ feature <- function(input_list = fiducial_pt_list, index){
     inner_mouth_down_dist <- get_distance(inner_mouth_down_points)#
     inner_mouth_down_angle <- get_angle(inner_mouth_down_points)#
     
-    result <- t(matrix(c(face_dist, face_angle, leftface_a, rightface_a, left_eye_dist, left_eye_angle1, left_eye_angle2, right_eye_dist, right_eye_angle1, right_eye_angle2, left_brow_dist, left_brow_angle, right_brow_dist, right_brow_angle, nose_dist, nose_angle, nose_area, outer_area, inner_area, out_mouth_up_dist, out_mouth_up_angle, out_mouth_down_dist, out_mouth_down_angle, inner_mouth_up_dist, inner_mouth_up_angle, inner_mouth_down_dist, inner_mouth_down_angle)))
+    result <- t(matrix(c(face_dist, face_angle, leftface_a, rightface_a, left_eye_dist, left_eye_angle1, left_eye_angle2, right_eye_dist, right_eye_angle1, right_eye_angle2, left_brow_dist, left_brow_angle, right_brow_dist, right_brow_angle, nose_dist, nose_angle, nose_area, outer_area, inner_area, out_mouth_up_dist, out_mouth_up_angle, out_mouth_down_dist, out_mouth_down_angle, inner_mouth_up_dist, inner_mouth_up_angle, inner_mouth_down_dist, inner_mouth_down_angle, mat[-37,1], mat[-37,2])))
     
     return (result)
   }
