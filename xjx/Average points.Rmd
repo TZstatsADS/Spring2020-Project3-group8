@@ -1,5 +1,6 @@
 ---
 title: "average points"
+author: "Jinxu Xiang"
 output: html_document
 ---
 
