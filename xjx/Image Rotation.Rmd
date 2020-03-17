@@ -12,7 +12,7 @@ library(EBImage)
 ```
 
 ```{r}
-indices = 1ÿ
+indices = 1
 image.path_sub <- paste0(train_image_dir, sprintf("%04d", indices), ".jpg")
 image.list_sub = list(EBImage::readImage(image.path_sub))
 img = Image(image.list_sub[[1]], colormode = 'Color')

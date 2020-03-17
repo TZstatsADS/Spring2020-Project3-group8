@@ -44,6 +44,10 @@ if(!require("e1071")){
 if(!require("geometry")){
   install.packages("geometry")
 }
+if(!require("mlogit")){
+  install.packages("mlogit")
+}
+
 
 library(R.matlab)
 library(readxl)
@@ -54,6 +58,7 @@ library(caret)
 library(gbm)
 library(e1071)
 library(geometry)
+library(mlogit)
 ```
 
 ### Step 0 set work directories
@@ -152,6 +157,7 @@ and the midpoint of the upper lip(52).  For example, the distance of an happy fa
   + Output: an RData file that contains extracted features and corresponding responses
 
 ```{r feature}
+# all_points from Image Rotation All
 source("../xjx_lib/feature.R")
 tm_feature_train <- NA
 if(run.feature.train){
@@ -227,23 +233,23 @@ g6 = c(6,13,16)
 ```{r}
 dat_train2 = dat_train %>% as_tibble %>% 
   mutate(large_idx = 0) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g1, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g1, 1, large_idx)) %>% 
   mutate(large_idx = ifelse(emotion_idx %in% g2, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g3, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g4, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g5, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g6, 1, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g3, 3, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g4, 4, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g5, 5, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g6, 6, large_idx)) %>% 
   select(-emotion_idx) %>%
   rename(emotion_idx = large_idx) %>%
   as.data.frame()
 dat_test2 = dat_test %>% as_tibble %>% 
   mutate(large_idx = 0) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g1, 2, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g1, 1, large_idx)) %>% 
   mutate(large_idx = ifelse(emotion_idx %in% g2, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g3, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g4, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g5, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g6, 1, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g3, 3, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g4, 4, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g5, 5, large_idx)) %>% 
+  mutate(large_idx = ifelse(emotion_idx %in% g6, 6, large_idx)) %>% 
   select(-emotion_idx) %>%
   rename(emotion_idx = large_idx) %>%
   as.data.frame()
@@ -268,16 +274,13 @@ SVM
 ```{r}
 source("../xjx_lib/train_SVM.R")
 source("../xjx_lib/test_SVM.R")
-svm_model = svm_train(dat_train, kernel = 'radial')[[1]]
+svm_model = svm_train(dat_train, kernel = 'radial', gamma = 0.001)[[1]]
 ```
 
 ```{r}
 pred_svm = svm_test(svm_model, dat_test)[[1]]
 mean(dat_test$emotion_idx == pred_svm)
 ```
-
-
-
 
 
 ### Summarize Running Time
