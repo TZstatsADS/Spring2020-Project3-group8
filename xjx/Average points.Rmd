@@ -33,6 +33,10 @@ for (i in 1:length(group_points)){
 ```
 
 ```{r}
+#save(ave_points, file="../output/ave_points.Rdata")
+```
+
+```{r}
 draw_face = function(points, col){
   g1 = c(2:9,2)
   g2 = c(11:18,11)
@@ -52,8 +56,6 @@ draw_face = function(points, col){
   lines(points[g8,1],-points[g8,2], col = col)
 }
 ```
-
-
 
 ```{r}
 name = info$emotion_cat %>% unique()
