@@ -1,0 +1,221 @@
+---
+title: "image rotation all"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(EBImage)
+library(tidyverse)
+```
+
+```{r}
+train_dir <- "../data/train_set/" # This will be modified for different data sets.
+train_image_dir <- paste(train_dir, "images/", sep="")
+train_pt_dir <- paste(train_dir,  "points/", sep="")
+train_label_path <- paste(train_dir, "label.csv", sep="") 
+info <- read.csv("../data/train_set/label.csv")
+```
+
+
+```{r}
+load("../output/fiducial_pt_list.Rdata")
+single = c(35,36,37,38,44,52,56,59,62)
+double = data.frame(x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63),
+                    x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))
+
+emotion_type=info%>%group_by(type,emotion_cat)%>%summarise()
+emotion_list_simple=c('Angry','Disgusted','Fearful','Happy','Neutral','Sad','Surprised')
+emotion_list_compound=c('Angrily disgusted','Angrily surprised','Appalled','Awed','Disgustedly surprised','Fearfully angry','Fearfully disgusted','Fearfully surprised','Happily disgusted','Happily surprised','Hatred','Sadly angry','Sadly disgusted','Sadly fearful','Sadly surprised')
+emotion_list_all=c(emotion_list_simple,emotion_list_compound)
+fixdist = -170
+```
+
+#这里我加了我的函数&减了一些for循环
+```{r}
+cal_angle = function(pos){
+  model = lm(x ~ y, data = pos)
+  summary(model)
+  angle = atan(model$coefficients[2])
+  
+  return(angle)
+}
+
+cal_rotation = function(points, angle){
+  alpha=atan(points[,2]/points[,1])
+  d=sqrt((points[,2])^2+(points[,1])^2)
+  newx=d*cos(alpha + angle) + 0 + 750*sin(angle)
+  newy=d*sin(alpha + angle) + 0
+  points_rotation=data.frame(x=newx,y=newy)
+  
+  return(points_rotation)
+}
+
+cal_translate = function(points, center_x = 500, center_y = 375){
+  newx=points[,1]+center_x-points[37,1]
+  newy=points[,2]+center_y-points[37,2]
+  points_translate=data.frame(x = newx, y = newy)
+  
+  return(points_translate)
+}
+
+cal_fixdist = function(points){
+  apply(points[c(1,10),],2,mean)[2] - points[44,][2]
+}
+
+cal_zoom = function(points, rate){
+  points*unlist(rate)
+}
+
+move_images = function(points, img, center_x = 500, center_y = 375){
+  pos_single = data.frame(x = points[single,1], y = points[single,2])
+  pos_double=data.frame(x=0.5*points[double[,1],1]+0.5*points[double[,2],1],
+                        y=0.5*points[double[,1],2]+0.5*points[double[,2],2])
+  pos=rbind(pos_single,pos_double)
+  
+  angle = cal_angle(pos)
+  points_rotation = cal_rotation(points, angle)
+  my_fixdist = cal_fixdist(points_rotation)
+  rate = fixdist/my_fixdist
+  points_zoom = cal_zoom(points_rotation, rate)
+  points_translate = cal_translate(points_rotation, center_x, center_y)
+  
+  img_rotate = rotate(img, angle/2/pi*360)
+  img_zoom = resize(img_rotate, nrow(img_rotate)*unlist(rate))
+  img_translate = translate(img_rotate, c(center_x-points_rotation[37,1],
+                                          center_y-points_rotation[37,2]))
+
+  return(list(points_translate, img_translate))
+}
+
+change_image = function(indices = c(1,2)){
+  image.path_sub = map(indices, ~paste0(train_image_dir, sprintf("%04d", .x), ".jpg"))
+  image.list_sub = map(image.path_sub, ~EBImage::readImage(.x))
+  img = map(image.list_sub, ~Image(.x, colormode = 'Color'))
+  
+  fiducial_pt_list_sub = fiducial_pt_list[indices]
+  points = map(fiducial_pt_list_sub, ~data.frame(x = .x[1:78,1], y = .x[1:78,2]))
+  result_move = map(1:length(points), ~move_images(points[[.x]], img[[.x]]))
+  
+  return(result_move)
+}
+
+
+
+
+display_emotion=function(emotion){
+  indices <- info[info$emotion_cat==emotion, 'Index']
+  l=length(indices)
+  result_move = change_image(indices)
+  Image_list_sub = map(result_move, ~imageData(.x[[2]])[100:900,100:700,])
+  
+  Image_overlap_data=Image_list_sub[[1]]/l
+  for (i in 2:l){
+    Image_overlap_data=Image_overlap_data+Image_list_sub[[i]]/l
+  }
+  
+  display(Image(Image_overlap_data,colormode='Color'), method="raster")
+  title(emotion)
+}
+
+```
+
+```{r}
+map(emotion_list_simple,~display_emotion(.x))
+```
+
+
+```{r}
+begin = Sys.time()
+indices = 1:25
+result_move = change_image(indices)
+new_points = map(result_move, ~.x[[1]])
+new_img = map(result_move, ~.x[[2]])
+end = Sys.time()
+```
+
+```{r}
+(end-begin)*100
+```
+
+```{r}
+all_points = NULL
+for(i in 1:2){
+  indices = 1:25 + (i-1)*25
+  result_move = change_image(indices)
+  new_points = map(result_move, ~.x[[1]])
+  new_img = map(result_move, ~.x[[2]])
+  all_points = c(all_points, new_points)
+  
+}
+```
+
+
+
+
+
+
+
+
+```{r}
+# Only points no images
+move_points = function(points, center_x = 500, center_y = 375){
+  pos_single = data.frame(x = points[single,1], y = points[single,2])
+  pos_double=data.frame(x=0.5*points[double[,1],1]+0.5*points[double[,2],1],
+                        y=0.5*points[double[,1],2]+0.5*points[double[,2],2])
+  pos=rbind(pos_single,pos_double)
+  
+  angle = cal_angle(pos)
+  points_rotation = cal_rotation(points, angle)
+  my_fixdist = cal_fixdist(points_rotation)
+  rate = fixdist/my_fixdist
+  points_zoom = cal_zoom(points_rotation, rate)
+  points_translate = cal_translate(points_rotation, center_x, center_y)
+
+  return(points_translate)
+}
+
+change_points = function(indices = c(1,2)){
+  fiducial_pt_list_sub = fiducial_pt_list[indices]
+  points = map(fiducial_pt_list_sub, ~data.frame(x = .x[1:78,1], y = .x[1:78,2]))
+  result_move = map(1:length(points), ~move_points(points[[.x]]))
+  
+  return(result_move)
+}
+
+```
+
+```{r}
+begin2 = Sys.time()
+indices = 1:180
+new_points = change_points(indices)
+end2 = Sys.time()
+```
+
+```{r}
+(end2-begin2)*100
+```
+
+```{r}
+begin3 = Sys.time()
+indices = 1:2500
+all_points = change_points(indices)
+end3 = Sys.time()
+all_points = map(all_points, as.matrix)
+```
+
+```{r}
+end3-begin3
+```
+
+```{r}
+save(all_points, file="../output/all_points.RData")
+```
+
+
+
+
+
