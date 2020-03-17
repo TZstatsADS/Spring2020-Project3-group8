@@ -178,6 +178,9 @@ all_points = map(all_points, as.matrix)
 end3-begin3
 ```
 
+```{r}
+save(all_points, file="../output/all_points.RData")
+```
 
 
 

@@ -268,7 +268,7 @@ SVM
 ```{r}
 source("../xjx_lib/train_SVM.R")
 source("../xjx_lib/test_SVM.R")
-svm_model = svm_train(dat_train, kernel = 'sigmoid')[[1]]
+svm_model = svm_train(dat_train, kernel = 'radial')[[1]]
 ```
 
 ```{r}
