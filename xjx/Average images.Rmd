@@ -1,5 +1,5 @@
 ---
-title: "extract color"
+title: "Average Images"
 output: html_document
 ---
 
@@ -7,7 +7,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r , include=FALSE}
 library(tidyverse)
 library(ggplot2)
 library(EBImage)
@@ -15,18 +15,18 @@ source("../xjx_lib/change_images.R")
 info <- read.csv("../data/train_set/label.csv")
 ```
 
-```{r}
+```{r, include=FALSE}
 img = change_image(1)[[1]][[2]]
 display(img, method = 'raster')
 ```
 
-```{r}
+```{r , include=FALSE}
 img1 = img
 img1 = 1-(1-img1)/20
 display(img1, method = 'raster')
 ```
 
-```{r}
+```{r , include=FALSE}
 draw_ave = function(indices, char)
 {
   l = length(indices)
