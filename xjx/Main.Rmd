@@ -47,7 +47,9 @@ if(!require("geometry")){
 if(!require("mlogit")){
   install.packages("mlogit")
 }
-
+if(!require("tidyverse")){
+  install.packages("tidyverse")
+}
 
 library(R.matlab)
 library(readxl)
@@ -59,6 +61,7 @@ library(gbm)
 library(e1071)
 library(geometry)
 library(mlogit)
+library(tidyverse)
 ```
 
 ### Step 0 set work directories
@@ -158,6 +161,7 @@ and the midpoint of the upper lip(52).  For example, the distance of an happy fa
 
 ```{r feature}
 # all_points from Image Rotation All
+load("../output/all_points.RData")
 source("../xjx_lib/feature.R")
 tm_feature_train <- NA
 if(run.feature.train){
