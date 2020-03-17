@@ -278,10 +278,12 @@ SVM
 ```{r}
 source("../xjx_lib/train_SVM.R")
 source("../xjx_lib/test_SVM.R")
-svm_model = svm_train(dat_train, kernel = 'radial', gamma = 0.001)[[1]]
+svm_model = svm_train(dat_train, kernel = 'poly', degree = 1, gamma = 0.008)[[1]]
 ```
 
 ```{r}
+pred_svm = svm_test(svm_model, dat_train)[[1]]
+mean(dat_train$emotion_idx == pred_svm)
 pred_svm = svm_test(svm_model, dat_test)[[1]]
 mean(dat_test$emotion_idx == pred_svm)
 ```

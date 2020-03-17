@@ -28,7 +28,7 @@ dist_histogram_by_emotion <- function(emotion_idx, pt1, pt2, vertical = T){
         pairwise_dist <- as.matrix(dist(ver.loc))
         ver.dist <- pairwise_dist[pt1,pt2]
     return(ver.dist)
-}
+    }
     dist_distribution <- sapply(indices, ver.dist)
     #jpeg(paste(c('../output/hist', emotion_idx,"_", pt1, "_", pt2, '.jpg'), collapse = ''),
     #width = 500, height = 375)
@@ -67,14 +67,14 @@ display_fid_pt <- function(identity){
         add_point <- function(n){text(x = fiducial_pt_list_sub[[j]][n,1],
                                       y = fiducial_pt_list_sub[[j]][n,2],
                                       label = as.character(n), col = "white", cex = 0.8)}
-        lapply(1:78,add_point)
+        #lapply(1:78,add_point)
         #dev.off() 
 }
 
     lapply(1:length(indices), display_single) 
 }
 
-display_fid_pt(110)
+display_fid_pt(117)
 
 ```
 

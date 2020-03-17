@@ -7,6 +7,7 @@ load("../output/fiducial_pt_list.RData")
 single = c(35,36,37,38,44,52,56,59,62)
 double = data.frame(x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63),
                     x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))
+fixdist = -170
 
 cal_angle = function(pos){
   model = lm(x ~ y, data = pos)
@@ -43,6 +44,14 @@ cal_translate = function(points, center_x = 500, center_y = 375){
   return(points_translate)
 }
 
+cal_fixdist = function(points){
+  apply(points[c(1,10),],2,mean)[2] - points[44,][2]
+}
+
+cal_zoom = function(points, rate){
+  points*unlist(rate)
+}
+
 move_images = function(points, img, center_x = 500, center_y = 375){
   pos = data.frame(x = points[single,1], y = points[single,2])
   for(i in 1:nrow(double)){
@@ -52,11 +61,17 @@ move_images = function(points, img, center_x = 500, center_y = 375){
   
   angle = cal_angle(pos)
   points_rotation = cal_rotation(points, angle)
-  points_translate = cal_translate(points_rotation, center_x, center_y)
+  
+  my_fixdist = cal_fixdist(points_rotation)
+  rate = fixdist/my_fixdist
+  points_zoom = cal_zoom(points_rotation, rate)
+  
+  points_translate = cal_translate(points_zoom, center_x, center_y)
   
   img_rotate = rotate(img, angle/2/pi*360)
-  img_translate = translate(img_rotate, c(center_x-points_rotation[37,1],
-                                          center_y-points_rotation[37,2]))
+  img_zoom = resize(img_rotate, nrow(img_rotate)*unlist(rate))
+  img_translate = translate(img_zoom, c(center_x-points_zoom[37,1],
+                                        center_y-points_zoom[37,2]))
   
   return(list(points_translate, img_translate))
 }
