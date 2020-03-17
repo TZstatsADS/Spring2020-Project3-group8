@@ -31,6 +31,7 @@ emotion_type=info%>%group_by(type,emotion_cat)%>%summarise()
 emotion_list_simple=c('Angry','Disgusted','Fearful','Happy','Neutral','Sad','Surprised')
 emotion_list_compound=c('Angrily disgusted','Angrily surprised','Appalled','Awed','Disgustedly surprised','Fearfully angry','Fearfully disgusted','Fearfully surprised','Happily disgusted','Happily surprised','Hatred','Sadly angry','Sadly disgusted','Sadly fearful','Sadly surprised')
 emotion_list_all=c(emotion_list_simple,emotion_list_compound)
+fixdist = -170
 ```
 
 #这里我加了我的函数&减了一些for循环
@@ -61,6 +62,14 @@ cal_translate = function(points, center_x = 500, center_y = 375){
   return(points_translate)
 }
 
+cal_fixdist = function(points){
+  apply(points[c(1,10),],2,mean)[2] - points[44,][2]
+}
+
+cal_zoom = function(points, rate){
+  points*unlist(rate)
+}
+
 move_images = function(points, img, center_x = 500, center_y = 375){
   pos_single = data.frame(x = points[single,1], y = points[single,2])
   pos_double=data.frame(x=0.5*points[double[,1],1]+0.5*points[double[,2],1],
@@ -69,9 +78,13 @@ move_images = function(points, img, center_x = 500, center_y = 375){
   
   angle = cal_angle(pos)
   points_rotation = cal_rotation(points, angle)
+  my_fixdist = cal_fixdist(points_rotation)
+  rate = fixdist/my_fixdist
+  points_zoom = cal_zoom(points_rotation, rate)
   points_translate = cal_translate(points_rotation, center_x, center_y)
   
   img_rotate = rotate(img, angle/2/pi*360)
+  img_zoom = resize(img_rotate, nrow(img_rotate)*unlist(rate))
   img_translate = translate(img_rotate, c(center_x-points_rotation[37,1],
                                           center_y-points_rotation[37,2]))
 
@@ -114,17 +127,6 @@ display_emotion=function(emotion){
 map(emotion_list_simple,~display_emotion(.x))
 ```
 
-```{r}
-indices = 1:3
-result_move = change_image(indices)
-new_points = map(result_move, ~.x[[1]])
-new_img = map(result_move, ~.x[[2]])
-```
-
-```{r}
-display(new_img[[3]], method = 'raster')
-points(new_points[[3]]$x, new_points[[3]]$y, col = 'blue', cex = 1, pch = 16)
-```
 
 ```{r}
 begin = Sys.time()
@@ -168,6 +170,9 @@ move_points = function(points, center_x = 500, center_y = 375){
   
   angle = cal_angle(pos)
   points_rotation = cal_rotation(points, angle)
+  my_fixdist = cal_fixdist(points_rotation)
+  rate = fixdist/my_fixdist
+  points_zoom = cal_zoom(points_rotation, rate)
   points_translate = cal_translate(points_rotation, center_x, center_y)
 
   return(points_translate)
@@ -204,6 +209,10 @@ all_points = map(all_points, as.matrix)
 
 ```{r}
 end3-begin3
+```
+
+```{r}
+save(all_points, file="../output/all_points.RData")
 ```
 
 
