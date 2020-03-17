@@ -87,3 +87,31 @@ change_image = function(indices = c(1,2)){
   
   return(result_move)
 }
+
+# Only points no images
+move_points = function(points, center_x = 500, center_y = 375){
+  pos = data.frame(x = points[single,1], y = points[single,2])
+  for(i in 1:nrow(double)){
+    pos = rbind(pos, data.frame(x = (points[double[i,1],1]+points[double[i,2],1])/2, 
+                                y = (points[double[i,1],2]+points[double[i,2],2])/2))
+  }
+  
+  angle = cal_angle(pos)
+  points_rotation = cal_rotation(points, angle)
+  
+  my_fixdist = cal_fixdist(points_rotation)
+  rate = fixdist/my_fixdist
+  points_zoom = cal_zoom(points_rotation, rate)
+  
+  points_translate = cal_translate(points_zoom, center_x, center_y)
+  
+  return(points_translate)
+}
+
+change_points = function(indices = c(1,2)){
+  fiducial_pt_list_sub = fiducial_pt_list[indices]
+  points = map(fiducial_pt_list_sub, ~data.frame(x = .x[1:78,1], y = .x[1:78,2]))
+  result_move = map(1:length(points), ~move_points(points[[.x]]))
+  
+  return(result_move)
+}
