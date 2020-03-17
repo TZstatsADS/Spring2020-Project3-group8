@@ -10,11 +10,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(EBImage)
 library(tidyverse)
-```
-
-```{r}
-library(tidyverse)
-library(EBImage)
+train_dir <- "../data/train_set/" # This will be modified for different data sets.
+train_image_dir <- paste(train_dir, "images/", sep="")
+train_pt_dir <- paste(train_dir,  "points/", sep="")
+train_label_path <- paste(train_dir, "label.csv", sep="") 
+load("../output/fiducial_pt_list.RData")
 ```
 
 
