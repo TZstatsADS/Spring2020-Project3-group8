@@ -27,9 +27,9 @@ cal_rotation = function(points, angle, center_x = 0, center_y = 0, move_x = 750*
   return(points_rotation)
 }
 
-cal_translate = function(points, center_x = 500, center_y = 375){
-  newx=points[,1]+center_x-points[37,1]
-  newy=points[,2]+center_y-points[37,2]
+cal_translate = function(points, center_x = 500, center_y = 375, from_x = points[37,1], from_y = points[37,2]){
+  newx = points[,1] + center_x - from_x
+  newy = points[,2] + center_y - from_y
   points_translate=data.frame(x = newx, y = newy)
   
   return(points_translate)

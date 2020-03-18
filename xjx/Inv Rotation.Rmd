@@ -79,6 +79,14 @@ source("../xjx_lib/inv_change_images.R")
 sum(inv_change_points(points, endpoints) - points)
 ```
 
+```{r}
+a = data.frame(x = c(300, 520, 100, 700, 900), y = c(300, 520, 100, 600, 240))
+b = inv_change_points(points, a)
+plot(points[,1], -points[,2], col = 'red', cex = 0.1, pch = 16, xlim = c(0,1000), ylim = c(-750,0))
+points(endpoints[,1], -endpoints[,2], col = 'blue', cex = 0.1, pch = 16)
+points(a[,1], -a[,2], col = 'blue', cex = 1, pch = 3)
+points(b[,1], -b[,2], col = 'red', cex = 1, pch = 3)
+```
 
 
 
