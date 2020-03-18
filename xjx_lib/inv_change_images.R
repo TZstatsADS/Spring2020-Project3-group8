@@ -4,8 +4,8 @@ double = data.frame(x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42
 
 inv_change_points = function(points, endpoints, center_x = 500, center_y = 375, fixdist = -170){
   pos_single = data.frame(x = points[single,1], y = points[single,2])
-  pos_double=data.frame(x=0.5*points[double[,1],1]+0.5*points[double[,2],1],
-                        y=0.5*points[double[,1],2]+0.5*points[double[,2],2])
+  pos_double=data.frame(x = 0.5*points[double[,1],1]+0.5*points[double[,2],1],
+                        y = 0.5*points[double[,1],2]+0.5*points[double[,2],2])
   pos=rbind(pos_single,pos_double)
   angle = cal_angle(pos)
   points_rotation = cal_rotation(points, angle)

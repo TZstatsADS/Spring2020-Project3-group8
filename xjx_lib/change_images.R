@@ -45,8 +45,8 @@ cal_zoom = function(points, rate){
 
 move_images = function(points, img, center_x = 500, center_y = 375, fixdist = -170){
   pos_single = data.frame(x = points[single,1], y = points[single,2])
-  pos_double=data.frame(x=0.5*points[double[,1],1]+0.5*points[double[,2],1],
-                        y=0.5*points[double[,1],2]+0.5*points[double[,2],2])
+  pos_double=data.frame(x = 0.5*points[double[,1],1]+0.5*points[double[,2],1],
+                        y = 0.5*points[double[,1],2]+0.5*points[double[,2],2])
   pos=rbind(pos_single,pos_double)
   
   angle = cal_angle(pos)
@@ -81,8 +81,8 @@ change_image = function(indices = c(1,2)){
 # Only points no images
 move_points = function(points, center_x = 500, center_y = 375, fixdist = -170){
   pos_single = data.frame(x = points[single,1], y = points[single,2])
-  pos_double=data.frame(x=0.5*points[double[,1],1]+0.5*points[double[,2],1],
-                        y=0.5*points[double[,1],2]+0.5*points[double[,2],2])
+  pos_double=data.frame(x = 0.5*points[double[,1],1]+0.5*points[double[,2],1],
+                        y = 0.5*points[double[,1],2]+0.5*points[double[,2],2])
   pos=rbind(pos_single,pos_double)
   
   angle = cal_angle(pos)
