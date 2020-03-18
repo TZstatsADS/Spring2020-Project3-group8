@@ -12,9 +12,6 @@ inv_change_points = function(points, endpoints, center_x = 500, center_y = 375, 
   
   my_fixdist = cal_fixdist(points_rotation)
   rate = fixdist/my_fixdist
-  points_zoom = cal_zoom(points_rotation, rate)
-  
-  points_translate = cal_translate(points_zoom, center_x, center_y)
   
   endpoints_zoom = cal_translate(endpoints, points_zoom[37,1], points_zoom[37,2])
   endpoints_rotation = cal_zoom(endpoints_zoom, 1/rate)
