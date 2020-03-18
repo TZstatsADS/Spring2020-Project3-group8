@@ -30,9 +30,9 @@ display(img1, method = 'raster')
 draw_ave = function(indices, char)
 {
   l = length(indices)
-  ave_img = change_image(1)[[1]][[2]][100:900,75:675,] * 0
+  ave_img = change_image(1)[[1]][[2]][100:900,100:700,] * 0
   for(i in 1:l){
-    img = change_image(indices[i])[[1]][[2]][100:900,75:675,]
+    img = change_image(indices[i])[[1]][[2]][100:900,100:700,]
     ave_img = ave_img + (1-img)/l
   }
   ave_img = 1-ave_img

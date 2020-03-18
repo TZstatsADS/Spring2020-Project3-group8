@@ -61,7 +61,7 @@ draw_face = function(points, col){
 name = info$emotion_cat %>% unique()
 for(i in 1:21){
   for(j in (i+1):22){
-    plot(ave_points[[i]][,1], -ave_points[[i]][,2], xlim = c(140, 860), ylim = c(-680, -140), pch = 16, col = 'blue',cex = 0.5)
+    plot(ave_points[[i]][,1], -ave_points[[i]][,2], xlim = c(100, 900), ylim = c(-730, -130), pch = 16, col = 'blue',cex = 0.5)
     draw_face(ave_points[[i]], 'blue')
     points(ave_points[[j]][,1], -ave_points[[j]][,2], pch = 16, col = 'red', cex = 0.5)
     draw_face(ave_points[[j]], 'red')
