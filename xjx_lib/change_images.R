@@ -18,11 +18,11 @@ cal_angle = function(pos){
 }
 
 cal_rotation = function(points, angle, center_x = 0, center_y = 0, move_x = 750*sin(angle), move_y = 0){
-  alpha=atan((points[,2]-center_y)/(points[,1]-center_x))
-  d=sqrt((points[,2]-center_y)^2+(points[,1]-center_x)^2)
-  newx=d*cos(alpha + angle) + center_x + move_x
-  newy=d*sin(alpha + angle) + center_y + move_y
-  points_rotation=data.frame(x=newx,y=newy)
+  alpha = atan((points[,2]-center_y)/(points[,1]-center_x))
+  d = sqrt((points[,2]-center_y)^2+(points[,1]-center_x)^2)
+  newx = d*cos(alpha + angle) + center_x + move_x
+  newy = d*sin(alpha + angle) + center_y + move_y
+  points_rotation = data.frame(x=newx,y=newy)
   
   return(points_rotation)
 }
