@@ -291,11 +291,10 @@ source("../xjx_lib/xgb_tune.R")
 source("../xjx_lib/xgb_train.R")
 source("../xjx_lib/xgb_test.R")
 source("../xjx_lib/ac_byclass.R")
-source("../xjx_lib/xgb_accuracy.R")
 ```
 
 ```{r}
-### Cross Validation to find Best parameter for XGBoost
+# Cross Validation to find Best parameter for XGBoost
 depth = c(5,10,15)
 child = c(3,5,10)
 err.tune = xgb_tune(dat_train_reduced, depth, child)[[1]]
