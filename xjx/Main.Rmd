@@ -50,6 +50,9 @@ if(!require("mlogit")){
 if(!require("tidyverse")){
   install.packages("tidyverse")
 }
+if(!require("xgboost")){
+  install.packages("xgboost")
+}
 
 library(R.matlab)
 library(readxl)
@@ -62,6 +65,7 @@ library(e1071)
 library(geometry)
 library(mlogit)
 library(tidyverse)
+library(xgboost)  
 ```
 
 ### Step 0 set work directories
@@ -112,23 +116,14 @@ n <- length(info$identity %>% unique())
 n_train <- round(n*(4/5), 0)
 train_identity = sample(info$identity %>% unique(), n_train, replace = F)
 
-train_idx <- which(info$identity %in% train_identity == 1)
+train_idx <- which(info$identity %in% train_identity)
 test_idx <- setdiff(info$Index,train_idx)
 
 train_idx = sample(train_idx, length(train_idx), replace = F)
 ```
 
-If you choose to extract features from images, such as using Gabor filter, R memory will exhaust all images are read together. The solution is to repeat reading a smaller batch(e.g 100) and process them. 
-```{r}
-n_files <- length(list.files(train_image_dir))
-
-image_list <- list()
-for(i in 1:100){
-   image_list[[i]] <- readImage(paste0(train_image_dir, sprintf("%04d", i), ".jpg"))
-}
-```
-
 Fiducial points are stored in matlab format. In this step, we read them and store them in a list.
+
 ```{r read fiducial points}
 #function to read fiducial points
 #input: index
@@ -286,6 +281,45 @@ pred_svm = svm_test(svm_model, dat_train)[[1]]
 mean(dat_train$emotion_idx == pred_svm)
 pred_svm = svm_test(svm_model, dat_test)[[1]]
 mean(dat_test$emotion_idx == pred_svm)
+```
+
+XGB
+
+```{r}
+source("../xjx_lib/xgb_cv.R")
+source("../xjx_lib/xgb_tune.R")
+source("../xjx_lib/xgb_train.R")
+source("../xjx_lib/xgb_test.R")
+source("../xjx_lib/ac_byclass.R")
+source("../xjx_lib/xgb_accuracy.R")
+```
+
+```{r}
+### Cross Validation to find Best parameter for XGBoost
+depth = c(5,10,15)
+child = c(3,5,10)
+err.tune = xgb_tune(dat_train_reduced, depth, child)[[1]]
+xgb.err.tune = err.tune[[1]] %>% as.data.frame 
+best_par_xgb = err.tune[[2]] %>% as.data.frame()
+```
+
+```{r}
+colnames(xgb.err.tune) = c(3,5,10)
+xgb.err.tune = gather(xgb.err.tune, key= "min_child")
+xgb.err.tune$depth = rep(c(5,10,15),3)
+xgb.err.tune
+ggplot(xgb.err.tune, mapping = aes(x=min_child, y=depth, fill=value))+
+  geom_tile()
+```
+
+```{r}
+xgb_model = xgb_train(dat_train, par = best_par_xgb)[[1]]
+pred_xgb = xgb_test(xgb_model, dat_test[,-ncol(dat_test)])[[1]]
+```
+
+```{r}
+pred_xgb_class = apply(pred_xgb,1,which.max)-1
+mean(dat_test$emotion_idx == pred_xgb_class)
 ```
 
 
