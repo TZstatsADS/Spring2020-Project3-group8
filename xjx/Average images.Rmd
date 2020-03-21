@@ -37,7 +37,10 @@ draw_ave = function(indices, char)
   }
   ave_img = 1-ave_img
   display(ave_img, method = 'raster')
-  title(char)
+  text(x = 150, y = 50, label = char, cex = 2.5, col = 'blue')
+  filename = paste0("../figs/ave_", char, ".jpeg")
+  dev.print(jpeg, filename = filename, width = dim(ave_img)[1], height = dim(ave_img)[2])
+  return(ave_img)
 }
 ```
 
