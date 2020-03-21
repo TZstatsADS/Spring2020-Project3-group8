@@ -324,11 +324,12 @@ confusionMatrix(factor(gbm_pred_class), dat_test$emotion_idx)
 ```
 
 ```{r}
-print(paste0("The accuracy for gbm model is: ", mean(dat_test$emotion_idx == gbm_pred_class)))
+gbm_accuracy_test = mean(dat_test$emotion_idx == gbm_pred_class)
+print(paste0("The accuracy for gbm model is: ", gbm_accuracy_test))
 ```
 
 
- 6 groups
+ 6 groups (useless for now)
 
 ```{r}
 g1 = c(1)
@@ -374,6 +375,7 @@ pred_gbm_class2 = apply(pred_gbm2,1,which.max)
 ```
 
 ```{r}
+gbm_accu
 mean(dat_test2$emotion_idx == pred_gbm_class2)
 ```
 
@@ -394,7 +396,8 @@ confusionMatrix(factor(gbm_pred_class), dat_test$emotion_idx)
 ```
 
 ```{r}
-print(paste0("The accuracy for svm model is: ", mean(dat_test$emotion_idx == svm_pred_class)))
+svm_accuracy_test = mean(dat_test$emotion_idx == svm_pred_class)
+print(paste0("The accuracy for svm model is: ", svm_accuracy_test))
 ```
 
 XGB
@@ -414,14 +417,52 @@ confusionMatrix(factor(xgb_pred_class), dat_test$emotion_idx)
 ```
 
 ```{r}
-print(paste0("The accuracy for xgb model is: ", mean(dat_test$emotion_idx == xgb_pred_class)))
+xgb_accuracy_test = mean(dat_test$emotion_idx == xgb_pred_class)
+print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test))
 ```
+
+```{r}
+my_theme = theme_light() + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+```{r}
+accuracy_test = tibble(gbm = gbm_accuracy_test, svm = svm_accuracy_test, xgb = xgb_accuracy_test)
+```
+
+```{r}
+accuracy_test %>% pivot_longer(1:3) %>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value),) + 
+  labs(x = 'Classifier', y = 'Accuracy') + 
+  my_theme
+```
+
 
 ### Summarize Running Time
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
 ```{r running_time}
-
+tm.train = tibble(gbm = tm.gbm.train[3], svm = tm.svm.train[3], xgb = tm.xgb.train[3])
+tm.test = tibble(gbm = tm.gbm.test[3], svm = tm.svm.test[3], xgb = tm.xgb.test[3])
 ```
+
+```{r}
+tm.train %>% pivot_longer(1:3) %>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value),) + 
+  labs(x = 'Classifier', y = 'Usage Time(s)') + 
+  my_theme
+```
+
+```{r}
+tm.test %>% pivot_longer(1:3) %>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value),) + 
+  labs(x = 'Classifier', y = 'Usage time(s)') + 
+  my_theme
+```
+
 
 ###Reference
 - Du, S., Tao, Y., & Martinez, A. M. (2014). Compound facial expressions of emotion. Proceedings of the National Academy of Sciences, 111(15), E1454-E1462.
