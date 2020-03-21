@@ -1,14 +1,3 @@
-train_dir <- "../data/train_set/" # This will be modified for different data sets.
-train_image_dir <- paste(train_dir, "images/", sep="")
-train_pt_dir <- paste(train_dir,  "points/", sep="")
-train_label_path <- paste(train_dir, "label.csv", sep="") 
-load("../output/fiducial_pt_list.RData")
-
-single = c(35,36,37,38,44,52,56,59,62)
-double = data.frame(x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63),
-                    x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))
-
-
 cal_angle = function(pos){
   model = lm(x ~ y, data = pos)
   summary(model)
@@ -66,7 +55,12 @@ move_images = function(points, img, center_x = 500, center_y = 375, fixdist = -1
   return(list(points_translate, img_translate))
 }
 
-change_image = function(indices = c(1,2)){
+change_image = function(indices = c(1,2), train_dir = "../data/train_set/", fiducial_pt_list = fiducial_pt_list, single = c(35,36,37,38,44,52,56,59,62), double = data.frame(x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63), x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))){
+  
+  train_image_dir <- paste(train_dir, "images/", sep="")
+  train_pt_dir <- paste(train_dir,  "points/", sep="")
+  train_label_path <- paste(train_dir, "label.csv", sep="") 
+  
   image.path_sub = map(indices, ~paste0(train_image_dir, sprintf("%04d", .x), ".jpg"))
   image.list_sub = map(image.path_sub, ~EBImage::readImage(.x))
   img = map(image.list_sub, ~Image(.x, colormode = 'Color'))
@@ -97,7 +91,11 @@ move_points = function(points, center_x = 500, center_y = 375, fixdist = -170){
   return(points_translate)
 }
 
-change_points = function(indices = c(1,2)){
+change_points = function(indices = c(1,2), train_dir = "../data/train_set/", fiducial_pt_list = fiducial_pt_list, single = c(35,36,37,38,44,52,56,59,62), double = data.frame(x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63), x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))){
+  train_image_dir <- paste(train_dir, "images/", sep="")
+  train_pt_dir <- paste(train_dir,  "points/", sep="")
+  train_label_path <- paste(train_dir, "label.csv", sep="") 
+  
   fiducial_pt_list_sub = fiducial_pt_list[indices]
   points = map(fiducial_pt_list_sub, ~data.frame(x = .x[1:78,1], y = .x[1:78,2]))
   result_move = map(1:length(points), ~move_points(points[[.x]]))

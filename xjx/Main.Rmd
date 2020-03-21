@@ -89,6 +89,7 @@ train_label_path <- paste(train_dir, "label.csv", sep="")
 
 In this chunk, we have a set of controls for the evaluation experiments. 
 
++ (T/F) process for baseline
 + (T/F) process for data set
 + (T/F) cross-validation on the training set
 + (number) K, the number of CV folds
@@ -98,11 +99,13 @@ In this chunk, we have a set of controls for the evaluation experiments.
 
 
 ```{r exp_setup}
+run.baseline = TRUE
+
 run.dataprocess.fiducial_pt_list = FALSE
 run.dataprocess.all_points = FALSE
 run.dataprocess.ave_points = FALSE
 
-run.cv = TRUE # run cross-validation on the training set
+run.cv = FALSE # run cross-validation on the training set
 K = 5  # number of CV folds
 run.feature.train = TRUE # process features for training set
 run.test = TRUE # run evaluation on an independent test set
@@ -156,11 +159,11 @@ if(run.dataprocess.all_points){
     x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))
   indices = 1:2500
   
-  tm.run.all_points = system.time(all_points <- change_points(indices))
+  tm.run.all_points = system.time(all_points <- change_points(indices, train_dir, fiducial_pt_list, single, double))
   
   all_points = map(all_points, as.matrix)
   
-  save(all_points, file="../output/all_points.RData")
+  save(all_points, file = "../output/all_points.RData")
 }
 ```
 
@@ -205,6 +208,21 @@ and the midpoint of the upper lip(52).  For example, the distance of an happy fa
 ```{r feature}
 load("../output/all_points.RData")
 source("../xjx_lib/feature.R")
+source("../xjx_lib/feature_baseline.R")
+
+if(run.baseline){
+    tm_feature_train_baseline <- NA
+  if(run.feature.train){
+    tm_feature_train_baseline <- system.time(dat_train_baseline <- feature_baseline(fiducial_pt_list, train_idx))
+    save(dat_train_baseline, file="../output/feature_train_baseline.RData")
+  }
+  
+  tm_feature_test_baseline <- NA
+  if(run.feature.test){
+    tm_feature_test_baseline <- system.time(dat_test_baseline <- feature_baseline(fiducial_pt_list, test_idx))
+    save(dat_test_baseline, file="../output/feature_test_baseline.RData")
+  }
+}
 
 tm_feature_train <- NA
 if(run.feature.train){
@@ -238,6 +256,16 @@ Call the train model and test model from library.
 GBM
 
 ```{r}
+if(run.baseline){
+  if(run.train.gbm){
+    source("../xjx_lib/train_gbm.R")
+    gbm_result_train_baseline = gbm_train(dat_train_baseline, 200, 0.8, 0.1, 3)
+    gbm_model_baseline = gbm_result_train_baseline[[1]]
+    tm.gbm.train_baseline = gbm_result_train_baseline[[2]]
+    save(gbm_model_baseline, file="../output/gbm_model_baseline.RData")
+  }
+}
+
 if(run.train.gbm){
   source("../xjx_lib/train_gbm.R")
   gbm_result_train = gbm_train(dat_train, 200, 0.8, 0.1, 3)
@@ -250,6 +278,16 @@ if(run.train.gbm){
 SVM
 
 ```{r}
+if(run.baseline){
+  if(run.train.svm){
+    source("../xjx_lib/train_SVM.R")
+    svm_result_train_baseline = svm_train(dat_train_baseline, kernel = 'poly', degree = 1, gamma = 0.008)
+    svm_model_baseline = svm_result_train_baseline[[1]]
+    tm.svm.train_baseline = svm_result_train_baseline[[2]]
+    save(svm_model_baseline, file="../output/svm_model_baseline.RData")
+  }
+}
+
 if(run.train.svm){
   source("../xjx_lib/train_SVM.R")
   svm_result_train = svm_train(dat_train, kernel = 'poly', degree = 1, gamma = 0.008)
@@ -262,6 +300,21 @@ if(run.train.svm){
 XGB
 
 ```{r}
+if(run.baseline){
+  if(run.cv & run.train.xgb){
+    # Cross Validation to find Best parameter for XGBoost
+    source("../xjx_lib/xgb_tune.R")
+    
+    depth_baseline = c(5,10,15)
+    child_baseline = c(3,5,10)
+    xgb_result_cv_baseline = xgb_tune(dat_train_baseline, depth_baseline, child_baseline, K)
+    xgb_err_baseline = xgb_result_cv_baseline[[1]]
+    tm.xgb.cv_baseline = xgb_result_cv_baseline[[2]]
+    xgb_err_tune_baseline = xgb_err_baseline[[1]] %>% as.data.frame()
+    xgb_best_par_baseline = xgb_err_baseline[[2]] %>% as.data.frame()
+  }
+}
+
 if(run.cv & run.train.xgb){
   # Cross Validation to find Best parameter for XGBoost
   source("../xjx_lib/xgb_tune.R")
@@ -277,9 +330,20 @@ if(run.cv & run.train.xgb){
 ```
 
 ```{r}
+if(run.baseline){
+  if(run.cv & run.train.xgb){
+    colnames(xgb_err_tune_baseline) = c(3,5,10)
+    xgb_err_tune_baseline = gather(xgb_err_tune_baseline, key = "min_child")
+    xgb_err_tune_baseline$depth = rep(c(5,10,15),3)
+    xgb_err_tune_baseline
+    ggplot(xgb_err_tune_baseline, mapping = aes(x=min_child, y=depth, fill=value))+
+      geom_tile()
+  }
+}
+
 if(run.cv & run.train.xgb){
   colnames(xgb_err_tune) = c(3,5,10)
-  xgb_err_tune = gather(xgb_err_tune, key= "min_child")
+  xgb_err_tune = gather(xgb_err_tune, key = "min_child")
   xgb_err_tune$depth = rep(c(5,10,15),3)
   xgb_err_tune
   ggplot(xgb_err_tune, mapping = aes(x=min_child, y=depth, fill=value))+
@@ -288,6 +352,18 @@ if(run.cv & run.train.xgb){
 ```
 
 ```{r}
+if(run.baseline){
+  if(run.train.xgb){
+    if(run.cv)
+      xgb_result_baseline = xgb_train(dat_train_baseline, par = best_par_xgb)
+    else
+      xgb_result_baseline = xgb_train(dat_train_baseline)
+    xgb_model_baseline = xgb_result_baseline[[1]]
+    tm.xgb.train_baseline = xgb_result_baseline[[2]]
+    save(svm_model_baseline, file="../output/xgb_model_baseline.RData")
+  }
+}
+
 if(run.train.xgb){
   if(run.cv)
     xgb_result = xgb_train(dat_train, par = best_par_xgb)
@@ -308,6 +384,25 @@ if(run.train.xgb){
 ### Step 5: Run test on test images
 
 GBM
+
+```{r}
+if(run.baseline){
+  source("../xjx_lib/test_gbm.R")
+  load("../output/gbm_model_baseline.RData")
+  
+  gbm_result_test_baseline = gbm_test(gbm_model_baseline, dat_test_baseline)
+  gbm_pred_baseline = gbm_result_test_baseline[[1]]
+  tm.gbm.test_baseline = gbm_result_test_baseline[[2]]
+  gbm_pred_class_baseline = apply(gbm_pred_baseline, 1, which.max)
+}
+```
+
+```{r}
+if(run.baseline){
+  gbm_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == gbm_pred_class_baseline)
+  print(paste0("The accuracy for gbm model baseline is: ", gbm_accuracy_test_baseline))
+}
+```
 
 ```{r}
 source("../xjx_lib/test_gbm.R")
@@ -379,8 +474,25 @@ gbm_accu
 mean(dat_test2$emotion_idx == pred_gbm_class2)
 ```
 
-
 SVM
+
+```{r}
+if(run.baseline){
+  source("../xjx_lib/test_SVM.R")
+  load("../output/svm_model_baseline.RData")
+  
+  svm_result_test_baseline = svm_test(svm_model_baseline, dat_test_baseline)
+  svm_pred_class_baseline = svm_result_test_baseline[[1]]
+  tm.svm.test_baseline = svm_result_test_baseline[[2]]
+}
+```
+
+```{r}
+if(run.baseline){
+  svm_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == svm_pred_class_baseline)
+  print(paste0("The accuracy for svm model baseline is: ", svm_accuracy_test_baseline))
+}
+```
 
 ```{r}
 source("../xjx_lib/test_SVM.R")
@@ -401,6 +513,25 @@ print(paste0("The accuracy for svm model is: ", svm_accuracy_test))
 ```
 
 XGB
+
+```{r}
+if(run.baseline){
+  source("../xjx_lib/xgb_test.R")
+  load("../output/xgb_model_baseline.RData")
+  
+  xgb_result_test_baseline = xgb_test(xgb_model_baseline, dat_test_baseline[,-ncol(dat_test_baseline)])
+  xgb_pred_baseline = xgb_result_test_baseline[[1]]
+  tm.xgb.test_baseline = xgb_result_test_baseline[[2]]
+  xgb_pred_class_baseline = apply(xgb_pred_baseline, 1, which.max) - 1
+}
+```
+
+```{r}
+if(run.baseline){
+  xgb_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == xgb_pred_class_baseline)
+  print(paste0("The accuracy for xgb model baseline is: ", xgb_accuracy_test_baseline))
+}
+```
 
 ```{r}
 source("../xjx_lib/xgb_test.R")
@@ -428,13 +559,28 @@ my_theme = theme_light() +
 ```
 
 ```{r}
+if(run.baseline){
+  accuracy_test_baseline = tibble(gbm = gbm_accuracy_test_baseline, svm = svm_accuracy_test_baseline, xgb = xgb_accuracy_test_baseline)
+}
+
 accuracy_test = tibble(gbm = gbm_accuracy_test, svm = svm_accuracy_test, xgb = xgb_accuracy_test)
 ```
 
 ```{r}
+if(run.baseline){
+  accuracy_test_baseline %>% pivot_longer(1:3) %>% 
+    ggplot(aes(x = name, fill = name)) +
+    geom_bar(aes(weight = value)) + 
+    labs(x = 'Classifier', y = 'Accuracy') + 
+    my_theme
+}
+```
+
+
+```{r}
 accuracy_test %>% pivot_longer(1:3) %>% 
   ggplot(aes(x = name, fill = name)) +
-  geom_bar(aes(weight = value),) + 
+  geom_bar(aes(weight = value)) + 
   labs(x = 'Classifier', y = 'Accuracy') + 
   my_theme
 ```
@@ -442,15 +588,41 @@ accuracy_test %>% pivot_longer(1:3) %>%
 
 ### Summarize Running Time
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
+
 ```{r running_time}
+if(run.baseline){
+  tm.train_baseline = tibble(gbm = tm.gbm.train_baseline[3], svm = tm.svm.train_baseline[3], xgb = tm.xgb.train_baseline[3])
+  tm.test_baseline = tibble(gbm = tm.gbm.test_baseline[3], svm = tm.svm.test_baseline[3], xgb = tm.xgb.test_baseline[3])
+}
+
 tm.train = tibble(gbm = tm.gbm.train[3], svm = tm.svm.train[3], xgb = tm.xgb.train[3])
 tm.test = tibble(gbm = tm.gbm.test[3], svm = tm.svm.test[3], xgb = tm.xgb.test[3])
 ```
 
 ```{r}
+if(run.baseline){
+  tm.train_baseline %>% pivot_longer(1:3) %>% 
+    ggplot(aes(x = name, fill = name)) +
+    geom_bar(aes(weight = value)) + 
+    labs(x = 'Classifier', y = 'Usage Time(s)') + 
+    my_theme
+}
+```
+
+```{r}
+if(run.baseline){
+  tm.test_baseline %>% pivot_longer(1:3) %>% 
+    ggplot(aes(x = name, fill = name)) +
+    geom_bar(aes(weight = value),) + 
+    labs(x = 'Classifier', y = 'Usage time(s)') + 
+    my_theme
+}
+```
+
+```{r}
 tm.train %>% pivot_longer(1:3) %>% 
   ggplot(aes(x = name, fill = name)) +
-  geom_bar(aes(weight = value),) + 
+  geom_bar(aes(weight = value)) + 
   labs(x = 'Classifier', y = 'Usage Time(s)') + 
   my_theme
 ```
