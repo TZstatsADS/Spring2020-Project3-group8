@@ -20,18 +20,15 @@ if(!require("R.matlab")){
 if(!require("readxl")){
   install.packages("readxl")
 }
-
 if(!require("dplyr")){
   install.packages("dplyr")
 }
 if(!require("readxl")){
   install.packages("readxl")
 }
-
 if(!require("ggplot2")){
   install.packages("ggplot2")
 }
-
 if(!require("caret")){
   install.packages("caret")
 }
@@ -50,6 +47,9 @@ if(!require("mlogit")){
 if(!require("tidyverse")){
   install.packages("tidyverse")
 }
+if(!require("xgboost")){
+  install.packages("xgboost")
+}
 
 library(R.matlab)
 library(readxl)
@@ -62,6 +62,7 @@ library(e1071)
 library(geometry)
 library(mlogit)
 library(tidyverse)
+library(xgboost)  
 ```
 
 ### Step 0 set work directories
@@ -85,24 +86,33 @@ train_label_path <- paste(train_dir, "label.csv", sep="")
 
 In this chunk, we have a set of controls for the evaluation experiments. 
 
++ (T/F) process for baseline
++ (T/F) process for data set
 + (T/F) cross-validation on the training set
 + (number) K, the number of CV folds
 + (T/F) process features for training set
 + (T/F) run evaluation on an independent test set
 + (T/F) process features for test set
 
+
 ```{r exp_setup}
-run.cv=TRUE # run cross-validation on the training set
-K <- 5  # number of CV folds
-run.feature.train=TRUE # process features for training set
-run.test=TRUE # run evaluation on an independent test set
-run.feature.test=TRUE # process features for test set
-```
-Using cross-validation or independent test set evaluation, we compare the performance of models with different specifications. In this Starter Code, we tune parameter k (number of neighbours) for KNN.
+run.baseline = FALSE
 
-```{r model_setup}
+run.dataprocess.fiducial_pt_list = FALSE
+run.dataprocess.all_points = FALSE
+run.dataprocess.ave_points = FALSE
 
+run.cv = FALSE # run cross-validation on the training set
+K = 5  # number of CV folds
+run.feature.train = TRUE # process features for training set
+run.test = TRUE # run evaluation on an independent test set
+run.feature.test = TRUE # process features for test set
+
+run.train.gbm = TRUE
+run.train.svm = TRUE
+run.train.xgb = TRUE
 ```
+
 
 ### Step 2: import data and train-test split 
 ```{r}
@@ -111,35 +121,68 @@ info <- read.csv(train_label_path)
 n <- length(info$identity %>% unique())
 n_train <- round(n*(4/5), 0)
 train_identity = sample(info$identity %>% unique(), n_train, replace = F)
-
-train_idx <- which(info$identity %in% train_identity == 1)
+train_idx <- which(info$identity %in% train_identity)
 test_idx <- setdiff(info$Index,train_idx)
-
 train_idx = sample(train_idx, length(train_idx), replace = F)
 ```
 
-If you choose to extract features from images, such as using Gabor filter, R memory will exhaust all images are read together. The solution is to repeat reading a smaller batch(e.g 100) and process them. 
-```{r}
-n_files <- length(list.files(train_image_dir))
-
-image_list <- list()
-for(i in 1:100){
-   image_list[[i]] <- readImage(paste0(train_image_dir, sprintf("%04d", i), ".jpg"))
-}
-```
-
 Fiducial points are stored in matlab format. In this step, we read them and store them in a list.
+
 ```{r read fiducial points}
 #function to read fiducial points
 #input: index
 #output: matrix of fiducial points corresponding to the index
-readMat.matrix <- function(index){
+if(run.dataprocess.fiducial_pt_list){
+  
+  readMat.matrix <- function(index){
      return(round(readMat(paste0(train_pt_dir, sprintf("%04d", index), ".mat"))[[1]],0))
+  }
+  
+  #load fiducial points
+  fiducial_pt_list <- lapply(1:n_files, readMat.matrix)
+  save(fiducial_pt_list, file="../output/fiducial_pt_list.RData")
 }
+```
 
-#load fiducial points
-fiducial_pt_list <- lapply(1:n_files, readMat.matrix)
-save(fiducial_pt_list, file="../output/fiducial_pt_list.RData")
+```{r}
+if(run.dataprocess.all_points){
+  
+  source("../xjx_lib/change_images.R")
+  load("../output/fiducial_pt_list.RData")
+  
+  single = c(35,36,37,38,44,52,56,59,62)
+  double = data.frame(
+    x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63),
+    x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))
+  indices = 1:2500
+  
+  tm.run.all_points = system.time(all_points <- change_points(indices, train_dir, fiducial_pt_list, single, double))
+  
+  all_points = map(all_points, as.matrix)
+  
+  save(all_points, file = "../output/all_points.RData")
+}
+```
+
+```{r}
+if(run.dataprocess.ave_points){
+  
+  load("../output/all_points.RData")
+  
+  emo_idx = map(1:22, ~info$emotion_idx == .x)
+  group_points = map(emo_idx, ~all_points[.x])
+  ave_points = NULL
+  for (i in 1:length(group_points)){
+    mean = matrix(rep(0,78*2), nc = 2)
+    l = length(group_points[[i]])
+    for(j in 1:l){
+      group_points[[i]][[j]]
+      mean = mean + group_points[[i]][[j]]/l
+    }
+    ave_points = c(ave_points, list(mean))
+  }
+  save(ave_points, file="../output/ave_points.Rdata")
+}
 ```
 
 ### Step 3: construct features and responses
@@ -160,21 +203,36 @@ and the midpoint of the upper lip(52).  For example, the distance of an happy fa
   + Output: an RData file that contains extracted features and corresponding responses
 
 ```{r feature}
-# all_points from Image Rotation All
 load("../output/all_points.RData")
 source("../xjx_lib/feature.R")
+source("../xjx_lib/feature_baseline.R")
+
+if(run.baseline){
+    tm_feature_train_baseline <- NA
+  if(run.feature.train){
+    tm_feature_train_baseline <- system.time(dat_train_baseline <- feature_baseline(fiducial_pt_list, train_idx))
+    save(dat_train_baseline, file="../output/feature_train_baseline.RData")
+  }
+  
+  tm_feature_test_baseline <- NA
+  if(run.feature.test){
+    tm_feature_test_baseline <- system.time(dat_test_baseline <- feature_baseline(fiducial_pt_list, test_idx))
+    save(dat_test_baseline, file="../output/feature_test_baseline.RData")
+  }
+}
+
 tm_feature_train <- NA
 if(run.feature.train){
   tm_feature_train <- system.time(dat_train <- feature(all_points, train_idx))
+  save(dat_train, file="../output/feature_train.RData")
 }
 
 tm_feature_test <- NA
 if(run.feature.test){
   tm_feature_test <- system.time(dat_test <- feature(all_points, test_idx))
+  save(dat_test, file="../output/feature_test.RData")
 }
 
-#save(dat_train, file="../output/feature_train.RData")
-#save(dat_test, file="../output/feature_test.RData")
 ```
 
 ### Step 4: Train a classification model with training features and responses
@@ -192,6 +250,129 @@ Call the train model and test model from library.
 
 + In this Starter Code, we use KNN to do classification. 
 
+GBM
+
+```{r}
+if(run.baseline){
+  if(run.train.gbm){
+    source("../xjx_lib/train_gbm.R")
+    gbm_result_train_baseline = gbm_train(dat_train_baseline, 200, 0.8, 0.1, 3)
+    gbm_model_baseline = gbm_result_train_baseline[[1]]
+    tm.gbm.train_baseline = gbm_result_train_baseline[[2]]
+    save(gbm_model_baseline, file="../output/gbm_model_baseline.RData")
+  }
+}
+
+if(run.train.gbm){
+  source("../xjx_lib/train_gbm.R")
+  gbm_result_train = gbm_train(dat_train, 200, 0.8, 0.1, 3)
+  gbm_model = gbm_result_train[[1]]
+  tm.gbm.train = gbm_result_train[[2]]
+  save(gbm_model, file="../output/gbm_model.RData")
+}
+```
+
+SVM
+
+```{r}
+if(run.baseline){
+  if(run.train.svm){
+    source("../xjx_lib/train_SVM.R")
+    svm_result_train_baseline = svm_train(dat_train_baseline, kernel = 'poly', degree = 1, gamma = 0.008)
+    svm_model_baseline = svm_result_train_baseline[[1]]
+    tm.svm.train_baseline = svm_result_train_baseline[[2]]
+    save(svm_model_baseline, file="../output/svm_model_baseline.RData")
+  }
+}
+
+if(run.train.svm){
+  source("../xjx_lib/train_SVM.R")
+  svm_result_train = svm_train(dat_train, kernel = 'poly', degree = 1, gamma = 0.008)
+  svm_model = svm_result_train[[1]]
+  tm.svm.train = svm_result_train[[2]]
+  save(svm_model, file="../output/svm_model.RData")
+}
+```
+
+XGB
+
+```{r}
+if(run.baseline){
+  if(run.cv & run.train.xgb){
+    # Cross Validation to find Best parameter for XGBoost
+    source("../xjx_lib/xgb_tune.R")
+    
+    depth_baseline = c(5,10,15)
+    child_baseline = c(3,5,10)
+    xgb_result_cv_baseline = xgb_tune(dat_train_baseline, depth_baseline, child_baseline, K)
+    xgb_err_baseline = xgb_result_cv_baseline[[1]]
+    tm.xgb.cv_baseline = xgb_result_cv_baseline[[2]]
+    xgb_err_tune_baseline = xgb_err_baseline[[1]] %>% as.data.frame()
+    xgb_best_par_baseline = xgb_err_baseline[[2]] %>% as.data.frame()
+  }
+}
+
+if(run.cv & run.train.xgb){
+  # Cross Validation to find Best parameter for XGBoost
+  source("../xjx_lib/xgb_tune.R")
+  
+  depth = c(5,10,15)
+  child = c(3,5,10)
+  xgb_result_cv = xgb_tune(dat_train, depth, child, K)
+  xgb_err = xgb_result_cv[[1]]
+  tm.xgb.cv = xgb_result_cv[[2]]
+  xgb_err_tune = xgb_err[[1]] %>% as.data.frame()
+  xgb_best_par = xgb_err[[2]] %>% as.data.frame()
+}
+```
+
+```{r}
+if(run.baseline){
+  if(run.cv & run.train.xgb){
+    colnames(xgb_err_tune_baseline) = c(3,5,10)
+    xgb_err_tune_baseline = gather(xgb_err_tune_baseline, key = "min_child")
+    xgb_err_tune_baseline$depth = rep(c(5,10,15),3)
+    xgb_err_tune_baseline
+    ggplot(xgb_err_tune_baseline, mapping = aes(x=min_child, y=depth, fill=value))+
+      geom_tile()
+  }
+}
+
+if(run.cv & run.train.xgb){
+  colnames(xgb_err_tune) = c(3,5,10)
+  xgb_err_tune = gather(xgb_err_tune, key = "min_child")
+  xgb_err_tune$depth = rep(c(5,10,15),3)
+  xgb_err_tune
+  ggplot(xgb_err_tune, mapping = aes(x=min_child, y=depth, fill=value))+
+    geom_tile()
+}
+```
+
+```{r}
+if(run.baseline){
+  if(run.train.xgb){
+    if(run.cv)
+      xgb_result_baseline = xgb_train(dat_train_baseline, par = best_par_xgb)
+    else
+      xgb_result_baseline = xgb_train(dat_train_baseline)
+    xgb_model_baseline = xgb_result_baseline[[1]]
+    tm.xgb.train_baseline = xgb_result_baseline[[2]]
+    save(svm_model_baseline, file="../output/xgb_model_baseline.RData")
+  }
+}
+
+if(run.train.xgb){
+  if(run.cv)
+    xgb_result = xgb_train(dat_train, par = best_par_xgb)
+  else
+    xgb_result = xgb_train(dat_train)
+  xgb_model = xgb_result[[1]]
+  tm.xgb.train = xgb_result[[2]]
+  save(svm_model, file="../output/xgb_model.RData")
+}
+
+```
+
 
 #### Model selection with cross-validation
 
@@ -202,28 +383,45 @@ Call the train model and test model from library.
 GBM
 
 ```{r}
-source("../xjx_lib/train_gbm.R")
+if(run.baseline){
+  source("../xjx_lib/test_gbm.R")
+  load("../output/gbm_model_baseline.RData")
+  
+  gbm_result_test_baseline = gbm_test(gbm_model_baseline, dat_test_baseline)
+  gbm_pred_baseline = gbm_result_test_baseline[[1]]
+  tm.gbm.test_baseline = gbm_result_test_baseline[[2]]
+  gbm_pred_class_baseline = apply(gbm_pred_baseline, 1, which.max)
+}
+```
+
+```{r}
+if(run.baseline){
+  gbm_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == gbm_pred_class_baseline)
+  print(paste0("The accuracy for gbm model baseline is: ", gbm_accuracy_test_baseline))
+}
+```
+
+```{r}
 source("../xjx_lib/test_gbm.R")
-gbm_model = gbm_train(dat_train, 200, 0.8, 0.1, 3)[[1]]
+load("../output/gbm_model.RData")
+
+gbm_result_test = gbm_test(gbm_model, dat_test)
+gbm_pred = gbm_result_test[[1]]
+tm.gbm.test = gbm_result_test[[2]]
+gbm_pred_class = apply(gbm_pred, 1, which.max)
 ```
 
 ```{r}
-pred_gbm = gbm_test(gbm_model, dat_test)[[1]]
-pred_gbm_class = apply(pred_gbm,1,which.max)
-confusionMatrix(factor(pred_gbm_class), dat_test$emotion_idx)
+confusionMatrix(factor(gbm_pred_class), dat_test$emotion_idx)
 ```
 
 ```{r}
-mean(dat_test$emotion_idx == pred_gbm_class)
+gbm_accuracy_test = mean(dat_test$emotion_idx == gbm_pred_class)
+print(paste0("The accuracy for gbm model is: ", gbm_accuracy_test))
 ```
 
-```{r}
-pred_gbm0 = gbm_test(gbm_model, dat_train)[[1]]
-pred_gbm_class0 = apply(pred_gbm0,1,which.max)
-mean(dat_train$emotion_idx == pred_gbm_class0)
-```
 
- 6 groups
+ 6 groups (useless for now)
 
 ```{r}
 g1 = c(1)
@@ -269,31 +467,171 @@ pred_gbm_class2 = apply(pred_gbm2,1,which.max)
 ```
 
 ```{r}
+gbm_accu
 mean(dat_test2$emotion_idx == pred_gbm_class2)
 ```
-
 
 SVM
 
 ```{r}
-source("../xjx_lib/train_SVM.R")
-source("../xjx_lib/test_SVM.R")
-svm_model = svm_train(dat_train, kernel = 'poly', degree = 1, gamma = 0.008)[[1]]
+if(run.baseline){
+  source("../xjx_lib/test_SVM.R")
+  load("../output/svm_model_baseline.RData")
+  
+  svm_result_test_baseline = svm_test(svm_model_baseline, dat_test_baseline)
+  svm_pred_class_baseline = svm_result_test_baseline[[1]]
+  tm.svm.test_baseline = svm_result_test_baseline[[2]]
+}
 ```
 
 ```{r}
-pred_svm = svm_test(svm_model, dat_train)[[1]]
-mean(dat_train$emotion_idx == pred_svm)
-pred_svm = svm_test(svm_model, dat_test)[[1]]
-mean(dat_test$emotion_idx == pred_svm)
+if(run.baseline){
+  svm_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == svm_pred_class_baseline)
+  print(paste0("The accuracy for svm model baseline is: ", svm_accuracy_test_baseline))
+}
+```
+
+```{r}
+source("../xjx_lib/test_SVM.R")
+load("../output/svm_model.RData")
+
+svm_result_test = svm_test(svm_model, dat_test)
+svm_pred_class = svm_result_test[[1]]
+tm.svm.test = svm_result_test[[2]]
+```
+
+```{r}
+confusionMatrix(factor(gbm_pred_class), dat_test$emotion_idx)
+```
+
+```{r}
+svm_accuracy_test = mean(dat_test$emotion_idx == svm_pred_class)
+print(paste0("The accuracy for svm model is: ", svm_accuracy_test))
+```
+
+XGB
+
+```{r}
+if(run.baseline){
+  source("../xjx_lib/xgb_test.R")
+  load("../output/xgb_model_baseline.RData")
+  
+  xgb_result_test_baseline = xgb_test(xgb_model_baseline, dat_test_baseline[,-ncol(dat_test_baseline)])
+  xgb_pred_baseline = xgb_result_test_baseline[[1]]
+  tm.xgb.test_baseline = xgb_result_test_baseline[[2]]
+  xgb_pred_class_baseline = apply(xgb_pred_baseline, 1, which.max) - 1
+}
+```
+
+```{r}
+if(run.baseline){
+  xgb_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == xgb_pred_class_baseline)
+  print(paste0("The accuracy for xgb model baseline is: ", xgb_accuracy_test_baseline))
+}
+```
+
+```{r}
+source("../xjx_lib/xgb_test.R")
+load("../output/xgb_model.RData")
+
+xgb_result_test = xgb_test(xgb_model, dat_test[,-ncol(dat_test)])
+xgb_pred = xgb_result_test[[1]]
+tm.xgb.test = xgb_result_test[[2]]
+xgb_pred_class = apply(xgb_pred, 1, which.max)-1
+```
+
+```{r}
+confusionMatrix(factor(xgb_pred_class), dat_test$emotion_idx)
+```
+
+```{r}
+xgb_accuracy_test = mean(dat_test$emotion_idx == xgb_pred_class)
+print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test))
+```
+
+```{r}
+my_theme = theme_light() + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+```{r}
+if(run.baseline){
+  accuracy_test_baseline = tibble(gbm = gbm_accuracy_test_baseline, svm = svm_accuracy_test_baseline, xgb = xgb_accuracy_test_baseline)
+}
+
+accuracy_test = tibble(gbm = gbm_accuracy_test, svm = svm_accuracy_test, xgb = xgb_accuracy_test)
+```
+
+```{r}
+if(run.baseline){
+  accuracy_test_baseline %>% pivot_longer(1:3) %>% 
+    ggplot(aes(x = name, fill = name)) +
+    geom_bar(aes(weight = value)) + 
+    labs(x = 'Classifier', y = 'Accuracy') + 
+    my_theme
+}
+```
+
+
+```{r}
+accuracy_test %>% pivot_longer(1:3) %>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value)) + 
+  labs(x = 'Classifier', y = 'Accuracy') + 
+  my_theme
 ```
 
 
 ### Summarize Running Time
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
-```{r running_time}
 
+```{r running_time}
+if(run.baseline){
+  tm.train_baseline = tibble(gbm = tm.gbm.train_baseline[3], svm = tm.svm.train_baseline[3], xgb = tm.xgb.train_baseline[3])
+  tm.test_baseline = tibble(gbm = tm.gbm.test_baseline[3], svm = tm.svm.test_baseline[3], xgb = tm.xgb.test_baseline[3])
+}
+
+tm.train = tibble(gbm = tm.gbm.train[3], svm = tm.svm.train[3], xgb = tm.xgb.train[3])
+tm.test = tibble(gbm = tm.gbm.test[3], svm = tm.svm.test[3], xgb = tm.xgb.test[3])
 ```
+
+```{r}
+if(run.baseline){
+  tm.train_baseline %>% pivot_longer(1:3) %>% 
+    ggplot(aes(x = name, fill = name)) +
+    geom_bar(aes(weight = value)) + 
+    labs(x = 'Classifier', y = 'Usage Time(s)') + 
+    my_theme
+}
+```
+
+```{r}
+if(run.baseline){
+  tm.test_baseline %>% pivot_longer(1:3) %>% 
+    ggplot(aes(x = name, fill = name)) +
+    geom_bar(aes(weight = value),) + 
+    labs(x = 'Classifier', y = 'Usage time(s)') + 
+    my_theme
+}
+```
+
+```{r}
+tm.train %>% pivot_longer(1:3) %>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value)) + 
+  labs(x = 'Classifier', y = 'Usage Time(s)') + 
+  my_theme
+```
+
+```{r}
+tm.test %>% pivot_longer(1:3) %>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value),) + 
+  labs(x = 'Classifier', y = 'Usage time(s)') + 
+  my_theme
+```
+
 
 ###Reference
 - Du, S., Tao, Y., & Martinez, A. M. (2014). Compound facial expressions of emotion. Proceedings of the National Academy of Sciences, 111(15), E1454-E1462.
