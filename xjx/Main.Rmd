@@ -99,7 +99,7 @@ In this chunk, we have a set of controls for the evaluation experiments.
 
 
 ```{r exp_setup}
-run.baseline = TRUE
+run.baseline = FALSE
 
 run.dataprocess.fiducial_pt_list = FALSE
 run.dataprocess.all_points = FALSE
