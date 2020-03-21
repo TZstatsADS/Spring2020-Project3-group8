@@ -2,7 +2,9 @@
 ### Construct features and responses for training images  ###
 #############################################################
 
-feature <- function(input_list = fiducial_pt_list, index){
+#source("../xjx_lib/change_images.R")
+#source("../xjx_lib/inv_change_images.R")
+feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
   # 
   # ### Construct process features for training images 
   # 
@@ -72,10 +74,78 @@ feature <- function(input_list = fiducial_pt_list, index){
     return (model$coefficients[3])
   }
   
-  get_result <- function(mat){
+  get_eyebrow=function(index){
+    
+    points=input_list[[index]]
+    pointpair=all_points[[index]][c(23,27),]
+    center=apply(pointpair,2,mean)
+    
+    length=pointpair[2,1]-pointpair[1,1]
+    
+    a=(center[1]-length*0.4):(center[1]+length*0.4)
+    
+    b=center[2]:(center[2]+0.8*length)
+    
+    final_points=merge(a,b)
+    return_points=inv_change_points(points, final_points)%>%round()%>%unique()
+    
+    image_final=image_list[[index]]
+    
+    color_list=map2(return_points[,1],return_points[,2],~image_final[.x,.y,])
+    color_list_sum=map(color_list,sum)%>%unlist
+    
+    #skin color
+    indices_skin=c(35,38)
+    points_select=all_points[[index]][indices_skin,]
+    points_skin_all=merge(min(points_select[,1]):max(points_select[,1]),points_select[,2])
+    skin_color_points=inv_change_points(points, points_skin_all)%>%round()%>%unique()
+    skin_color_list_3=map2(skin_color_points[,1],skin_color_points[,2],~image_final[.x,.y,])
+    skin_color_list_sum=map(skin_color_list_3,sum)%>%unlist%>%mean()
+    rate=sum(color_list_sum<skin_color_list_sum)/length(color_list_sum)
+    return(rate)
+  }
+  
+  #get face folds
+  get_color_line <- function(idx1, idx2, img, points){
+    pt1 <- points[idx1,]
+    pt2 <- points[idx2,]
+    slope <- as.numeric((pt2[2]-pt1[2])/(pt2[1]-pt1[1]))
+    intercept <- as.numeric(pt1[2] - slope*pt1[1])
+    x <- as.numeric(pt1[1]):as.numeric(pt2[1])
+    y <- round(x*slope+intercept)
+    return (mean(img[x,y,1:3]))
+  }
+  
+  get_skin_color <- function(img, points){
+    c1 <- get_color_line(59, 69, img, points)
+    c2 <- get_color_line(57, 70, img, points)
+    c3 <- get_color_line(56, 71, img, points)
+    c4 <- get_color_line(55, 72, img, points)
+    c5 <- get_color_line(54, 73, img, points)
+    return (mean(c(c1, c2, c3, c4, c5), na.rm = T))
+  }
+  
+  get_color <- function(index){
+    img <- image_list[[index]]
+    points <- fiducial_pt_list[[index]]
+    y1 <- as.numeric(round(0.4*points[53,2] + 0.6*points[46,2]))
+    y2 <- as.numeric(round(0.1*points[46,2] + 0.9*points[53,2]))
+    x1 <- as.numeric(round((points[45,1] + points[46,1])/2))
+    x2 <- as.numeric(round((points[46,1] + points[76,1])/2))
+    x <- c(x1:x2)
+    y <- c(y1:y2)
+    diff <- max(img[x,y,1] + img[x,y,2] + img[x,y,3]) - min(img[x,y,1] + img[x,y,2] + img[x,y,3])
+    mat <- img[x,y,1]+img[x,y,2]+img[x,y,2]
+    skin_color <- get_skin_color(img, points)*3
+    threshold <- skin_color - 0.2
+    mean(mat < threshold)
+    return(c(diff, mean(mat < threshold)))
+  }
+  
+  get_result <- function(mat,index){
     ## face dist
     facepoints <- mat[64:78,]
-    face_dist <- get_distance(facepoints)#
+    # face_dist <- get_distance(facepoints)#
     
     ## face angle
     face_angle <- get_angle(facepoints)#
@@ -157,12 +227,81 @@ feature <- function(input_list = fiducial_pt_list, index){
     inner_mouth_down_dist <- get_distance(inner_mouth_down_points)#
     inner_mouth_down_angle <- get_angle(inner_mouth_down_points)#
     
-    result <- t(matrix(c(face_dist, face_angle, leftface_a, rightface_a, left_eye_dist, left_eye_angle1, left_eye_angle2, right_eye_dist, right_eye_angle1, right_eye_angle2, left_brow_dist, left_brow_angle, right_brow_dist, right_brow_angle, nose_dist, nose_angle, nose_area, outer_area, inner_area, out_mouth_up_dist, out_mouth_up_angle, out_mouth_down_dist, out_mouth_down_angle, inner_mouth_up_dist, inner_mouth_up_angle, inner_mouth_down_dist, inner_mouth_down_angle, mat[-37,1]-500, mat[-37,2]-375)))
+    
+    ##### WX #####
+    ## eyebrow head middle
+    eyebrow_mid_points <- mat[c(23,27),]
+    eyebrow_head_dist <- get_distance(eyebrow_mid_points)
+    
+    ## eyebrow - eye
+    inner_eye_corner <- mat[6,]
+    eyebrow_eye_dist1 <- get_distance(mat[c(2,19),])
+    eyebrow_eye_dist2 <- get_distance(mat[c(3,20),])
+    eyebrow_eye_dist3 <- get_distance(mat[c(4,21),])
+    eyebrow_eye_dist4 <- get_distance(mat[c(9,19),])
+    eyebrow_eye_dist5 <- get_distance(mat[c(6,23),])
+    
+    ## eyebrow_left - nose bridge
+    eyebrow_cornor_nose_bridge_dist <- get_distance(mat[c(23,35),])
+    
+    ## eye width
+    inner_eye_corner_dist <- get_distance(mat[c(6,11),])
+    outer_eye_corner_dist <- get_distance(mat[c(2,15),])
+    one_eye_width_dist <- get_distance(mat[c(2,6),])
+    
+    ## eye height
+    eye_height_dist1 <- get_distance(mat[c(4,8),])
+    eye_height_dist2 <- get_distance(mat[c(3,9),])
+    
+    ## pupil dist
+    pupil_dist <- get_distance(rbind(left_pt, right_pt))
+    
+    ## eye_corner_nose_dist
+    eye_corner_nose_dist <- get_distance(mat[c(6,42),])
+    
+    ## eye angle
+    eye_angle_points <- mat[c(2:3,9),]
+    eye_angle <- get_angle(eye_angle_points)
+    
+    ## nose_bridge_dist
+    nose_bridge_points <- mat[c(39,49),]
+    nose_bridge_dist <- get_distance(nose_bridge_points)
+    
+    ## nose dist
+    nose_dist1 <- get_distance(mat[c(38,44),])
+    nose_dist2 <- get_distance(mat[c(38,50),])
+    nose_dist3 <- get_distance(mat[c(38,52),])
+    nose_dist4 <- get_distance(mat[c(38,56),])
+    
+    ## nose width
+    nose_width <- get_distance(mat[c(42,46),])
+    
+    ## down nose angle
+    nose_down_angle <- get_angle(mat[43:45,])
+    
+    result <- t(matrix(c(face_angle, leftface_a, 
+                         rightface_a, left_eye_dist, left_eye_angle1, 
+                         left_eye_angle2, right_eye_dist, right_eye_angle1, 
+                         right_eye_angle2, left_brow_dist, left_brow_angle, 
+                         right_brow_dist, right_brow_angle, nose_dist, 
+                         nose_angle, nose_area, outer_area, inner_area, 
+                         out_mouth_up_dist, out_mouth_up_angle, out_mouth_down_dist, 
+                         out_mouth_down_angle, inner_mouth_up_dist, inner_mouth_up_angle, 
+                         inner_mouth_down_dist, inner_mouth_down_angle, mat[-37,1]-500, mat[-37,2]-375,
+                         eyebrow_head_dist,eyebrow_eye_dist1, eyebrow_eye_dist2,eyebrow_eye_dist3,eyebrow_eye_dist4, 
+                         eyebrow_eye_dist5,eyebrow_cornor_nose_bridge_dist,inner_eye_corner_dist,outer_eye_corner_dist,
+                         one_eye_width_dist,eye_height_dist1,eye_height_dist2,pupil_dist,eye_corner_nose_dist,eye_angle,
+                         nose_bridge_dist, nose_dist1,nose_dist2,nose_dist3,nose_dist4,nose_width,nose_down_angle)))
     
     return (result)
   }
+  
+  
+  
   dist_feature <- t(sapply(input_list[index], get_result))
-  feature_withemo_data <- cbind(dist_feature, info$emotion_idx[index])
+  eyebrow_feature<-as.matrix(sapply(index,get_eyebrow))
+  face_folds <- t(sapply(index, get_color))
+  feature_withemo_data <- cbind(dist_feature,eyebrow_feature,face_folds,info$emotion_idx[index])
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
   feature_withemo_data <- as.data.frame(feature_withemo_data)
   feature_withemo_data$emotion_idx <- as.factor(feature_withemo_data$emotion_idx)
