@@ -1,4 +1,4 @@
-xgb_tune = function(dat_train, max_depth_values, min_child_weight_values){
+xgb_tune = function(dat_train, max_depth_values, min_child_weight_values, K = 5){
 
   source("../xjx_lib/xgb_cv.R")
 
@@ -17,7 +17,7 @@ xgb_tune = function(dat_train, max_depth_values, min_child_weight_values){
   for (i in 1:length(max_depth_values)){
     for (j in 1:length(min_child_weight_values)){
       par = list(depth = max_depth_values[i], child_weight = min_child_weight_values[j])
-      cv = xgb_cv(dat_train, par = par)
+      cv = xgb_cv(dat_train, par = par, K)
       error_matrix[i,j] = cv$error
       sd_matrix[i,j] = cv$sd
     }

@@ -268,7 +268,7 @@ if(run.cv & run.train.xgb){
   
   depth = c(5,10,15)
   child = c(3,5,10)
-  xgb_result_cv = xgb_tune(dat_train, depth, child)
+  xgb_result_cv = xgb_tune(dat_train, depth, child, K)
   xgb_err = xgb_result_cv[[1]]
   tm.xgb.cv = xgb_result_cv[[2]]
   xgb_err_tune = xgb_err[[1]] %>% as.data.frame()
