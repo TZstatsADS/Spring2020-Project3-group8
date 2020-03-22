@@ -4,7 +4,7 @@
 
 source("../xjx_lib/change_images.R")
 source("../xjx_lib/inv_change_images.R")
-feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", all_points){
+feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", train = all_points, test = all_points){
 
   get_distance <- function(mat){
     colnames(mat) <- c("x", "y")
@@ -41,7 +41,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
   get_eyebrow=function(index, file, img){
 
     points=input_list[[index]]
-    pointpair=all_points[[index]][c(23,27),]
+    pointpair=test[[index]][c(23,27),]
     center=apply(pointpair,2,mean)
     
     length=pointpair[2,1]-pointpair[1,1]
@@ -65,7 +65,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     
     #skin color
     indices_skin=c(35,38)
-    points_select=all_points[[index]][indices_skin,]
+    points_select=test[[index]][indices_skin,]
     points_skin_all=merge(min(points_select[,1]):max(points_select[,1]),points_select[,2])
     skin_color_points=inv_change_points(points, points_skin_all)%>%round()%>%unique()
     skin_color_list_3=map2(skin_color_points[,1],skin_color_points[,2],~image_final[.x,.y,])
@@ -104,7 +104,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     x <- c(x1:x2)
     y <- c(y1:y2)
     diff <- max(img[x,y,1] + img[x,y,2] + img[x,y,3]) - min(img[x,y,1] + img[x,y,2] + img[x,y,3])
-    mat <- img[x,y,1]+img[x,y,2]+img[x,y,2]
+    mat <- img[x,y,1]+img[x,y,2]+img[x,y,3]
     skin_color <- get_skin_color(img, points)*3
     threshold <- skin_color - thre_value
     mean(mat < threshold)
@@ -295,12 +295,64 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     
   }
   
+  ###从这里开始
+  #取每一个emotion里的mean matrix
+  get_mean <- function(emo_index){
+    group <- info %>% filter(emotion_idx == emo_index)
+    n <- nrow(group)
+    idx <- group$Index
+    points <- all_points[idx]
+    df <- as.data.frame(points)
+    seqodd <- seq(1,n*2,2)
+    seqeven <- seq(2,n*2,2)
+    xdf <- df[, seqodd]
+    ydf <- df[, seqeven]
+    xmean <- apply(xdf, 1, mean)#78个点，每一个点的xmean
+    ymean <- apply(ydf, 1, mean)#78个点，每一个点的ymean
+    dfmean <- data.frame(x = xmean, y = ymean)
+    return (dfmean)
+  }
   
-  dist_feature <- t(sapply(all_points[index], get_result))
+  #找每一个emotion里面的diff 算distance return出来百分比，现在的结果是一个数，一个testcase的一个点的一个emotion的百分比
+  get_diff <- function(emo_index, point_ind, train= all_points, test= test_point){
+    group <- info %>% filter(emotion_idx == emo_index)
+    n <- nrow(group)
+    idx <- group$Index
+    points <- train[idx]
+    df <- as.data.frame(points)
+    seqodd <- seq(1,n*2,2)
+    seqeven <- seq(2,n*2,2)
+    dfmean <- get_mean(emo_index)
+    diff <- map(points, function(x){x-dfmean})
+    df <- as.data.frame(diff)
+    xdiff <- t(df[, seqodd])
+    ydiff <- t(df[, seqeven])
+    distance <- xdiff^2 + ydiff^2
+    pt <- test[point_ind,]-dfmean[point_ind,]
+    test_dis <- sum(pt^2)
+    dis <- distance[,point_ind]
+    return (mean(test_dis < dis))
+  }
+  
+  #一个testcase的一个点的所有emotion
+  get_test <- function(point_ind, train= all_points, test= test_point){
+    return (map(c(1:22), function(x){get_diff(x,point_ind, train, test)}) %>% unlist())
+  }
+  
+  #testset的一个点的所有emotion
+  get_ptind <- function(point_ind, train= all_points, test= test_data){
+    return (t(sapply(test, function(x){get_test(point_ind, train= all_points, x)})))
+  }
+  
+  importantpts <- c(2,4,6,8,11,13,15,17,19,20,22,23,27,28,30,31,42,46,50,52,54,56,65,68,71,74,77)
+  var <- map(importantpts, function(x){get_ptind(x, all_points, test_data)})
+  
+  dist_feature <- t(sapply(test[index], get_result))
   #used_color <- t(sapply(index, get_used_color, file = image_file))
   feature_withemo_data <- cbind(dist_feature,
                                 #used_color,
-                                info$emotion_idx[index])
+                                info$emotion_idx[index],
+                                var[[1]],var[[2]],var[[3]],var[[4]],var[[5]],var[[6]],var[[7]],var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]],var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]])
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
   feature_withemo_data <- as.data.frame(feature_withemo_data)
   feature_withemo_data$emotion_idx <- as.factor(feature_withemo_data$emotion_idx)
