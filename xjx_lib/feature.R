@@ -142,6 +142,14 @@ feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
     return(c(diff, mean(mat < threshold)))
   }
   
+  get_symmetric <- function(mat1, mat2){
+    colnames(mat1) <- c("x", "y")
+    colnames(mat2) <- c("x", "y")
+    mat1[,1] <- 1000-mat1[,1]
+    mat <- mat2-mat1
+    return (sqrt(mat[,1]^2 + mat[,2]^2))
+  }
+  
   get_result <- function(mat,index){
     ## face dist
     facepoints <- mat[64:78,]
@@ -279,6 +287,14 @@ feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
     ## down nose angle
     nose_down_angle <- get_angle(mat[43:45,])
     
+    ## symmetric
+    single = c(35,36,37,38,44,52,56,59,62)
+    double = data.frame(x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63), 
+                        x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))
+    mat1 <- mat[double$x1,]
+    mat2 <- mat[double$x2,]
+    symmetricity <- get_symmetric(mat1, mat2)
+    
     result <- t(matrix(c(face_angle, leftface_a, 
                          rightface_a, left_eye_dist, left_eye_angle1, 
                          left_eye_angle2, right_eye_dist, right_eye_angle1, 
@@ -291,7 +307,8 @@ feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
                          eyebrow_head_dist,eyebrow_eye_dist1, eyebrow_eye_dist2,eyebrow_eye_dist3,eyebrow_eye_dist4, 
                          eyebrow_eye_dist5,eyebrow_cornor_nose_bridge_dist,inner_eye_corner_dist,outer_eye_corner_dist,
                          one_eye_width_dist,eye_height_dist1,eye_height_dist2,pupil_dist,eye_corner_nose_dist,eye_angle,
-                         nose_bridge_dist, nose_dist1,nose_dist2,nose_dist3,nose_dist4,nose_width,nose_down_angle)))
+                         nose_bridge_dist, nose_dist1,nose_dist2,nose_dist3,nose_dist4,nose_width,nose_down_angle, 
+                         symmetricity)))
     
     return (result)
   }
