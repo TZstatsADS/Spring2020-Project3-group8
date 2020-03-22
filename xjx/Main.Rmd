@@ -350,6 +350,7 @@ if(run.cv & run.train.xgb){
 
 ```{r}
 if(run.baseline){
+  source("../xjx_lib/xgb_train.R")
   if(run.train.xgb){
     if(run.cv)
       xgb_result_baseline = xgb_train(dat_train_baseline, par = best_par_xgb)
@@ -362,6 +363,7 @@ if(run.baseline){
 }
 
 if(run.train.xgb){
+  source("../xjx_lib/xgb_train.R")
   if(run.cv)
     xgb_result = xgb_train(dat_train, par = best_par_xgb)
   else
