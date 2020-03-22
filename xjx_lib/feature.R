@@ -38,11 +38,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (model$coefficients[3])
   }
   
-  get_eyebrow=function(index, file = image_file){
-    
-    image.path_sub = paste0(file, sprintf("%04d", index), ".jpg")
-    image.list_sub = EBImage::readImage(image.path_sub)
-    img = Image(image.list_sub, colormode = 'Color')
+  get_eyebrow=function(index, file, img){
 
     points=input_list[[index]]
     pointpair=all_points[[index]][c(23,27),]
@@ -98,12 +94,8 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (mean(c(c1, c2, c3, c4, c5), na.rm = T))
   }
   
-  get_color <- function(index, file = image_file, thre_value = 0.2){
+  get_color <- function(index, file, img, thre_value = 0.2){
     
-    image.path_sub = paste0(file, sprintf("%04d", index), ".jpg")
-    image.list_sub = EBImage::readImage(image.path_sub)
-    img = Image(image.list_sub, colormode = 'Color')
-
     points <- fiducial_pt_list[[index]]
     y1 <- as.numeric(round(0.4*points[53,2] + 0.6*points[46,2]))
     y2 <- as.numeric(round(0.1*points[46,2] + 0.9*points[53,2]))
@@ -290,14 +282,24 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (result)
   }
   
+  get_used_color = function(index, file = image_file){
+    
+    image.path_sub = paste0(file, sprintf("%04d", index), ".jpg")
+    image.list_sub = EBImage::readImage(image.path_sub)
+    img = Image(image.list_sub, colormode = 'Color')
+    
+    eyebrow_feature<-get_eyebrow(index, file, img)
+    face_folds<-get_color(index, file, img)
+    
+    return(c(eyebrow_feature, face_folds))
+    
+  }
   
   
   dist_feature <- t(sapply(all_points[index], get_result))
-  eyebrow_feature<-as.matrix(sapply(index,get_eyebrow))
-  face_folds <- t(sapply(index, get_color))
+  #used_color <- t(sapply(index, get_used_color, file = image_file))
   feature_withemo_data <- cbind(dist_feature,
-                                eyebrow_feature,
-                                face_folds,
+                                #used_color,
                                 info$emotion_idx[index])
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
   feature_withemo_data <- as.data.frame(feature_withemo_data)
