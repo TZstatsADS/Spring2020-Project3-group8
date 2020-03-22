@@ -93,14 +93,14 @@ In this chunk, we have a set of controls for the evaluation experiments.
 + (T/F) process features for training set
 + (T/F) run evaluation on an independent test set
 + (T/F) process features for test set
-
++ (T/F) process model of training data
 
 ```{r exp_setup}
-run.baseline = FALSE
+run.baseline = FALSE # run baseline feature, slow!
 
-run.dataprocess.fiducial_pt_list = FALSE
-run.dataprocess.all_points = FALSE
-run.dataprocess.ave_points = FALSE
+run.dataprocess.fiducial_pt_list = FALSE # save fiducial_pt_list
+run.dataprocess.all_points = FALSE # save all_points, new data after rotate zoom and move
+run.dataprocess.ave_points = FALSE # save ave_points, average data of 22 emotions
 
 run.cv = FALSE # run cross-validation on the training set
 K = 5  # number of CV folds
@@ -108,9 +108,9 @@ run.feature.train = TRUE # process features for training set
 run.test = TRUE # run evaluation on an independent test set
 run.feature.test = TRUE # process features for test set
 
-run.train.gbm = TRUE
-run.train.svm = TRUE
-run.train.xgb = TRUE
+run.train.gbm = TRUE # run gbm training model
+run.train.svm = TRUE # run svm training model
+run.train.xgb = TRUE # run xgb training model
 ```
 
 
@@ -223,13 +223,13 @@ if(run.baseline){
 
 tm_feature_train <- NA
 if(run.feature.train){
-  tm_feature_train <- system.time(dat_train <- feature(all_points, train_idx))
+  tm_feature_train <- system.time(dat_train <- feature(fiducial_pt_list, train_idx, image_file = "../data/train_set/images/", all_points))
   save(dat_train, file="../output/feature_train.RData")
 }
 
 tm_feature_test <- NA
 if(run.feature.test){
-  tm_feature_test <- system.time(dat_test <- feature(all_points, test_idx))
+  tm_feature_test <- system.time(dat_test <- feature(fiducial_pt_list, test_idx, image_file = "../data/train_set/images/", all_points))
   save(dat_test, file="../output/feature_test.RData")
 }
 
@@ -501,7 +501,7 @@ tm.svm.test = svm_result_test[[2]]
 ```
 
 ```{r}
-confusionMatrix(factor(gbm_pred_class), dat_test$emotion_idx)
+confusionMatrix(factor(svm_pred_class), dat_test$emotion_idx)
 ```
 
 ```{r}

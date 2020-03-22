@@ -2,46 +2,10 @@
 ### Construct features and responses for training images  ###
 #############################################################
 
-#source("../xjx_lib/change_images.R")
-#source("../xjx_lib/inv_change_images.R")
-feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
-  # 
-  # ### Construct process features for training images 
-  # 
-  # ### Input: a list of images or fiducial points; index: train index or test index
-  # 
-  # ### Output: a data frame containing: features and a column of label
-  # 
-  # ### here is an example of extracting pairwise distances between fiducial points
-  # ### Step 1: Write a function pairwise_dist to calculate pairwise distance of items in a vector
-  # pairwise_dist <- function(vec){
-  #   ### input: a vector(length n), output: a vector containing pairwise distances(length n(n-1)/2)
-  #   return(as.vector(dist(vec)))
-  # }
-  # 
-  # ### Step 2: Write a function pairwise_dist_result to apply function in Step 1 to column of a matrix 
-  # pairwise_dist_result <-function(mat){
-  #   ### input: a n*2 matrix(e.g. fiducial_pt_list[[1]]), output: a vector(length n(n-1))
-  #   ### by column
-  #   return(as.vector(apply(mat, 2, pairwise_dist))) 
-  # }
-  # 
-  # ### Step 3: Apply function in Step 2 to selected index of input list, output: a feature matrix with ncol = n(n-1) = 78*77 = 6006
-  # pairwise_dist_feature <- t(sapply(input_list[index], pairwise_dist_result))
-  # dim(pairwise_dist_feature) 
-  # 
-  # ### Step 4: construct a dataframe containing features and label with nrow = length of index
-  # ### column bind feature matrix in Step 3 and corresponding features
-  # pairwise_data <- cbind(pairwise_dist_feature, info$emotion_idx[index])
-  # ### add column names
-  # colnames(pairwise_data) <- c(paste("feature", 1:(ncol(pairwise_data)-1), sep = ""), "emotion_idx")
-  # ### convert matrix to data frame
-  # pairwise_data <- as.data.frame(pairwise_data)
-  # ### convert label column to factor
-  # pairwise_data$emotion_idx <- as.factor(pairwise_data$emotion_idx)
-  # 
-  # return(feature_df = pairwise_data)
-  
+source("../xjx_lib/change_images.R")
+source("../xjx_lib/inv_change_images.R")
+feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", all_points){
+
   get_distance <- function(mat){
     colnames(mat) <- c("x", "y")
     dif <- as.data.frame(diff(mat))
@@ -74,22 +38,31 @@ feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
     return (model$coefficients[3])
   }
   
-  get_eyebrow=function(index){
+  get_eyebrow=function(index, file = image_file){
     
+    image.path_sub = paste0(file, sprintf("%04d", index), ".jpg")
+    image.list_sub = EBImage::readImage(image.path_sub)
+    img = Image(image.list_sub, colormode = 'Color')
+
     points=input_list[[index]]
     pointpair=all_points[[index]][c(23,27),]
     center=apply(pointpair,2,mean)
     
     length=pointpair[2,1]-pointpair[1,1]
     
-    a=(center[1]-length*0.4):(center[1]+length*0.4)
-    
-    b=center[2]:(center[2]+0.8*length)
-    
+    if(length >= 0){
+      a=seq((center[1]-length*0.4),(center[1]+length*0.4),3)
+      b=seq(center[2],(center[2]+0.8*length),3)
+    }
+    else{
+      a=seq((center[1]-length*0.4),(center[1]+length*0.4),-3)
+      b=seq(center[2],(center[2]+0.8*length),-3)
+    }
+
     final_points=merge(a,b)
     return_points=inv_change_points(points, final_points)%>%round()%>%unique()
     
-    image_final=image_list[[index]]
+    image_final=img
     
     color_list=map2(return_points[,1],return_points[,2],~image_final[.x,.y,])
     color_list_sum=map(color_list,sum)%>%unlist
@@ -125,8 +98,12 @@ feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
     return (mean(c(c1, c2, c3, c4, c5), na.rm = T))
   }
   
-  get_color <- function(index){
-    img <- image_list[[index]]
+  get_color <- function(index, file = image_file, thre_value = 0.2){
+    
+    image.path_sub = paste0(file, sprintf("%04d", index), ".jpg")
+    image.list_sub = EBImage::readImage(image.path_sub)
+    img = Image(image.list_sub, colormode = 'Color')
+
     points <- fiducial_pt_list[[index]]
     y1 <- as.numeric(round(0.4*points[53,2] + 0.6*points[46,2]))
     y2 <- as.numeric(round(0.1*points[46,2] + 0.9*points[53,2]))
@@ -137,7 +114,7 @@ feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
     diff <- max(img[x,y,1] + img[x,y,2] + img[x,y,3]) - min(img[x,y,1] + img[x,y,2] + img[x,y,3])
     mat <- img[x,y,1]+img[x,y,2]+img[x,y,2]
     skin_color <- get_skin_color(img, points)*3
-    threshold <- skin_color - 0.2
+    threshold <- skin_color - thre_value
     mean(mat < threshold)
     return(c(diff, mean(mat < threshold)))
   }
@@ -315,10 +292,13 @@ feature <- function(input_list = fiducial_pt_list, index,image_list,all_points){
   
   
   
-  dist_feature <- t(sapply(input_list[index], get_result))
+  dist_feature <- t(sapply(all_points[index], get_result))
   eyebrow_feature<-as.matrix(sapply(index,get_eyebrow))
   face_folds <- t(sapply(index, get_color))
-  feature_withemo_data <- cbind(dist_feature,eyebrow_feature,face_folds,info$emotion_idx[index])
+  feature_withemo_data <- cbind(dist_feature,
+                                eyebrow_feature,
+                                face_folds,
+                                info$emotion_idx[index])
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
   feature_withemo_data <- as.data.frame(feature_withemo_data)
   feature_withemo_data$emotion_idx <- as.factor(feature_withemo_data$emotion_idx)
