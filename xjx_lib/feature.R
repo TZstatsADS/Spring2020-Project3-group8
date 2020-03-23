@@ -294,14 +294,15 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
                          nose_angle, nose_area, outer_area, inner_area, 
                          out_mouth_up_dist, out_mouth_up_angle, out_mouth_down_dist, 
                          out_mouth_down_angle, inner_mouth_up_dist, inner_mouth_up_angle, 
-                         inner_mouth_down_dist, inner_mouth_down_angle, mat[-37,1]-500, mat[-37,2]-375,
+                         inner_mouth_down_dist, inner_mouth_down_angle, #mat[-37,1]-500, mat[-37,2]-375,
                          eyebrow_head_dist,eyebrow_eye_dist1, eyebrow_eye_dist2,eyebrow_eye_dist3,eyebrow_eye_dist4, 
                          eyebrow_eye_dist5,eyebrow_cornor_nose_bridge_dist,inner_eye_corner_dist,outer_eye_corner_dist,
                          one_eye_width_dist,eye_height_dist1,eye_height_dist2,pupil_dist,eye_corner_nose_dist,eye_angle,
                          nose_bridge_dist, nose_dist1,nose_dist2,nose_dist3,nose_dist4,nose_width,nose_down_angle, 
                          face_to_mouth_dist1, face_to_mouth_dist2, face_to_mouth_dist3, face_to_mouth_dist4, face_to_mouth_dist5, face_to_mouth_dist6,
-                         mouth_a1, mouth_a2, eyebrow_a1, eyebrow_a2,
-                         symmetricity)))
+                         #symmetricity,
+                         mouth_a1, mouth_a2, eyebrow_a1, eyebrow_a2
+                         )))
     
     return (result)
   }
