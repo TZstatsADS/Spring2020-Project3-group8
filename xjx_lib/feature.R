@@ -295,42 +295,19 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     
   }
   
-  ###从这里开始
-  #取每一个emotion里的mean matrix
-  get_mean <- function(emo_index){
-    group <- info %>% filter(emotion_idx == emo_index)
-    n <- nrow(group)
-    idx <- group$Index
-    points <- all_points[idx]
-    df <- as.data.frame(points)
-    seqodd <- seq(1,n*2,2)
-    seqeven <- seq(2,n*2,2)
-    xdf <- df[, seqodd]
-    ydf <- df[, seqeven]
-    xmean <- apply(xdf, 1, mean)#78个点，每一个点的xmean
-    ymean <- apply(ydf, 1, mean)#78个点，每一个点的ymean
-    dfmean <- data.frame(x = xmean, y = ymean)
-    return (dfmean)
-  }
-  
+  load("../output/all_points.RData")
+  load("../output/ave_points.RData")
+  load("../output/distance.RData")
   #找每一个emotion里面的diff 算distance return出来百分比，现在的结果是一个数，一个testcase的一个点的一个emotion的百分比
   get_diff <- function(emo_index, point_ind, train= all_points, test= test_point){
     group <- info %>% filter(emotion_idx == emo_index)
-    n <- nrow(group)
     idx <- group$Index
-    points <- train[idx]
-    df <- as.data.frame(points)
-    seqodd <- seq(1,n*2,2)
-    seqeven <- seq(2,n*2,2)
-    dfmean <- get_mean(emo_index)
-    diff <- map(points, function(x){x-dfmean})
+    diff <- distance[idx]
     df <- as.data.frame(diff)
-    xdiff <- t(df[, seqodd])
-    ydiff <- t(df[, seqeven])
-    distance <- xdiff^2 + ydiff^2
+    dfmean <- ave_points[[emo_index]]
     pt <- test[point_ind,]-dfmean[point_ind,]
     test_dis <- sum(pt^2)
-    dis <- distance[,point_ind]
+    dis <- df[point_ind,]
     return (mean(test_dis < dis))
   }
   
