@@ -270,6 +270,22 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     mat2 <- mat[double$x2,]
     symmetricity <- get_symmetric(mat1, mat2)
     
+    face_to_mouth_dist1 <- get_distance(mat[c(71,56),]) 
+    face_to_mouth_dist2 <- get_distance(mat[c(69,50),]) 
+    face_to_mouth_dist3 <- get_distance(mat[c(73,54),]) 
+    face_to_mouth_dist4 <- get_distance(mat[c(71,52),]) 
+    face_to_mouth_dist5 <- get_distance(mat[c(64,50),]) 
+    face_to_mouth_dist6 <- get_distance(mat[c(78,54),]) 
+    
+    face_angle1 <- get_distance(mat[c(67,70),])
+    face_angle2 <- get_distance(mat[c(75,72),])
+    
+    mouth_a1 <- get_a(mat[c(50,57:54),])
+    mouth_a2 <- get_a(mat[c(50,63:61,54),])
+    
+    eyebrow_a1 <- get_a(mat[c(19:23),])
+    eyebrow_a2 <- get_a(mat[c(27:31),])
+    
     result <- t(matrix(c(face_angle, leftface_a, 
                          rightface_a, left_eye_dist, left_eye_angle1, 
                          left_eye_angle2, right_eye_dist, right_eye_angle1, 
@@ -283,6 +299,8 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
                          eyebrow_eye_dist5,eyebrow_cornor_nose_bridge_dist,inner_eye_corner_dist,outer_eye_corner_dist,
                          one_eye_width_dist,eye_height_dist1,eye_height_dist2,pupil_dist,eye_corner_nose_dist,eye_angle,
                          nose_bridge_dist, nose_dist1,nose_dist2,nose_dist3,nose_dist4,nose_width,nose_down_angle, 
+                         face_to_mouth_dist1, face_to_mouth_dist2, face_to_mouth_dist3, face_to_mouth_dist4, face_to_mouth_dist5, face_to_mouth_dist6,
+                         mouth_a1, mouth_a2, eyebrow_a1, eyebrow_a2,
                          symmetricity)))
     
     return (result)
@@ -323,14 +341,14 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
   }
   
   idx = map(1:22, ~with(info %>% filter(emotion_idx == .x), Index))
-  importantpts <- c(2,4,6,8,11,13,15,17,19,20,22,23,27,28,30,31,42,46,50,52,54,56,65,68,71,74,77)
+  importantpts <- c(50, 54)
   var <- map(importantpts, function(x){get_ptind(x, test[index], idx)})
   
   dist_feature <- t(sapply(test[index], get_result))
   #used_color <- t(sapply(index, get_used_color, file = image_file))
   feature_withemo_data <- cbind(dist_feature,
                                 #used_color,
-                                var[[1]],var[[2]],var[[3]],var[[4]],var[[5]],var[[6]],var[[7]],var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]],var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]],
+                                var[[1]], var[[2]], #var[[3]], var[[4]],var[[5]],var[[6]],var[[7]],var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]], var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]],
                                 info$emotion_idx[index]
                                 )
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")

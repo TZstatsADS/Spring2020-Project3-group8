@@ -98,10 +98,10 @@ In this chunk, we have a set of controls for the evaluation experiments.
 ```{r exp_setup}
 run.baseline = FALSE # run baseline feature, slow!
 
-run.dataprocess.fiducial_pt_list = FALSE # save fiducial_pt_list
-run.dataprocess.all_points = FALSE # save all_points, new data after rotate zoom and move
-run.dataprocess.ave_points = FALSE # save ave_points, average data of 22 emotions
-run.dataprocess.diff_points = FALSE # save diff, distance of each point to its mean
+run.dataprocess.fiducial_pt_list = TRUE # save fiducial_pt_list
+run.dataprocess.all_points = TRUE # save all_points, new data after rotate zoom and move
+run.dataprocess.ave_points = TRUE # save ave_points, average data of 22 emotions
+run.dataprocess.diff_points = TRUE # save diff, distance of each point to its mean
 
 run.cv = FALSE # run cross-validation on the training set
 K = 5  # number of CV folds
@@ -135,6 +135,7 @@ Fiducial points are stored in matlab format. In this step, we read them and stor
 #output: matrix of fiducial points corresponding to the index
 if(run.dataprocess.fiducial_pt_list){
   
+  n_files <- length(list.files(train_image_dir))
   readMat.matrix <- function(index){
      return(round(readMat(paste0(train_pt_dir, sprintf("%04d", index), ".mat"))[[1]],0))
   }
