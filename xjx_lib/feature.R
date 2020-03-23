@@ -4,7 +4,7 @@
 
 source("../xjx_lib/change_images.R")
 source("../xjx_lib/inv_change_images.R")
-feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", train = all_points, test = all_points){
+feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", test = all_points){
 
   get_distance <- function(mat){
     colnames(mat) <- c("x", "y")
@@ -295,41 +295,38 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     
   }
   
-  load("../output/all_points.RData")
   load("../output/ave_points.RData")
   load("../output/distance.RData")
+  
   #找每一个emotion里面的diff 算distance return出来百分比，现在的结果是一个数，一个testcase的一个点的一个emotion的百分比
-  get_diff <- function(emo_index, point_ind, train= all_points, test= test_point){
-    group <- info %>% filter(emotion_idx == emo_index)
-    idx <- group$Index
-    diff <- distance[idx]
-    df <- as.data.frame(diff)
-    dfmean <- ave_points[[emo_index]]
-    pt <- test[point_ind,]-dfmean[point_ind,]
+  get_diff <- function(emo_index, point_ind, test, idx){
+    dis <- distance[[point_ind]][idx]
+    pt <- test[point_ind,]-ave_points[[emo_index]][point_ind,]
     test_dis <- sum(pt^2)
-    dis <- df[point_ind,]
     return (mean(test_dis < dis))
   }
   
   #一个testcase的一个点的所有emotion
-  get_test <- function(point_ind, train= all_points, test= test_point){
-    return (map(c(1:22), function(x){get_diff(x,point_ind, train, test)}) %>% unlist())
+  get_test <- function(point_ind, test, idx){
+    return (map(c(1:22), function(x){get_diff(x, point_ind, test, idx[[x]])}) %>% unlist())
   }
   
   #testset的一个点的所有emotion
-  get_ptind <- function(point_ind, train= all_points, test= test_data){
-    return (t(sapply(test, function(x){get_test(point_ind, train= all_points, x)})))
+  get_ptind <- function(point_ind, test, idx){
+    return (t(sapply(test, function(x){get_test(point_ind, x, idx)})))
   }
   
+  idx = map(1:22, ~with(info %>% filter(emotion_idx == .x), Index))
   importantpts <- c(2,4,6,8,11,13,15,17,19,20,22,23,27,28,30,31,42,46,50,52,54,56,65,68,71,74,77)
-  var <- map(importantpts, function(x){get_ptind(x, all_points, test_data)})
+  var <- map(importantpts, function(x){get_ptind(x, test[index], idx)})
   
   dist_feature <- t(sapply(test[index], get_result))
   #used_color <- t(sapply(index, get_used_color, file = image_file))
   feature_withemo_data <- cbind(dist_feature,
                                 #used_color,
-                                info$emotion_idx[index],
-                                var[[1]],var[[2]],var[[3]],var[[4]],var[[5]],var[[6]],var[[7]],var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]],var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]])
+                                var[[1]],var[[2]],var[[3]],var[[4]],var[[5]],var[[6]],var[[7]],var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]],var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]],
+                                info$emotion_idx[index]
+                                )
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
   feature_withemo_data <- as.data.frame(feature_withemo_data)
   feature_withemo_data$emotion_idx <- as.factor(feature_withemo_data$emotion_idx)

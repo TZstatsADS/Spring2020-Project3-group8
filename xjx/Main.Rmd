@@ -206,9 +206,10 @@ if(run.dataprocess.diff_points){
     diff_points <- c(diff_points, get_diff(i, all_points))
   }
   distance <- map(diff_points, function(x){x[,1]^2+x[,2]^2})
+  distance = map(1:78, function(y) map(distance, ~.x[y]) %>% unlist)
   
-  save(diff_points, file="../output/ave_points.Rdata")
-  save(distance, file="../output/ave_points.Rdata")
+  save(diff_points, file="../output/diff_points.Rdata")
+  save(distance, file="../output/distance.Rdata")
 }
 ```
 
