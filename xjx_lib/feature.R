@@ -101,8 +101,14 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     y2 <- as.numeric(round(0.1*points[46,2] + 0.9*points[53,2]))
     x1 <- as.numeric(round((points[45,1] + points[46,1])/2))
     x2 <- as.numeric(round((points[46,1] + points[76,1])/2))
-    x <- c(x1:x2)
-    y <- c(y1:y2)
+    if(x1 > x2)
+      x <- seq(x1,x2,3)
+    else
+      x <- seq(x1,x2,-3)
+    if(y1 > y2)
+      y <- seq(y1,y2,3)
+    else
+      y <- seq(y1,y2,-3)
     diff <- max(img[x,y,1] + img[x,y,2] + img[x,y,3]) - min(img[x,y,1] + img[x,y,2] + img[x,y,3])
     mat <- img[x,y,1]+img[x,y,2]+img[x,y,3]
     skin_color <- get_skin_color(img, points)*3
