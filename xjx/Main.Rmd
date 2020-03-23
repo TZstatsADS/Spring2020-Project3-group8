@@ -101,6 +101,7 @@ run.baseline = FALSE # run baseline feature, slow!
 run.dataprocess.fiducial_pt_list = FALSE # save fiducial_pt_list
 run.dataprocess.all_points = FALSE # save all_points, new data after rotate zoom and move
 run.dataprocess.ave_points = FALSE # save ave_points, average data of 22 emotions
+run.dataprocess.diff_points = FALSE # save diff, distance of each point to its mean
 
 run.cv = FALSE # run cross-validation on the training set
 K = 5  # number of CV folds
@@ -184,6 +185,33 @@ if(run.dataprocess.ave_points){
   save(ave_points, file="../output/ave_points.Rdata")
 }
 ```
+
+```{r}
+if(run.dataprocess.diff_points){
+  
+  load("../output/all_points.RData")
+  load("../output/ave_points.RData")
+  
+  get_diff <- function(emo_index, train= all_points){
+    group <- info %>% filter(emotion_idx == emo_index)
+    idx <- group$Index
+    points <- train[idx]
+    dfmean <- ave_points[[emo_index]]
+    diff <- map(points, function(x){x-dfmean})
+    return (diff)
+  }
+  diff_points <- list()
+  
+  for (i in 1:22){
+    diff_points <- c(diff_points, get_diff(i, all_points))
+  }
+  distance <- map(diff_points, function(x){x[,1]^2+x[,2]^2})
+  
+  save(diff_points, file="../output/ave_points.Rdata")
+  save(distance, file="../output/ave_points.Rdata")
+}
+```
+
 
 ### Step 3: construct features and responses
 
