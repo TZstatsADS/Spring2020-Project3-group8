@@ -74,49 +74,6 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return(rate)
   }
   
-  #get face folds
-  get_color_line <- function(idx1, idx2, img, points){
-    pt1 <- points[idx1,]
-    pt2 <- points[idx2,]
-    slope <- as.numeric((pt2[2]-pt1[2])/(pt2[1]-pt1[1]))
-    intercept <- as.numeric(pt1[2] - slope*pt1[1])
-    x <- as.numeric(pt1[1]):as.numeric(pt2[1])
-    y <- round(x*slope+intercept)
-    return (mean(img[x,y,1:3]))
-  }
-  
-  get_skin_color <- function(img, points){
-    c1 <- get_color_line(59, 69, img, points)
-    c2 <- get_color_line(57, 70, img, points)
-    c3 <- get_color_line(56, 71, img, points)
-    c4 <- get_color_line(55, 72, img, points)
-    c5 <- get_color_line(54, 73, img, points)
-    return (mean(c(c1, c2, c3, c4, c5), na.rm = T))
-  }
-  
-  get_color <- function(index, file, img, thre_value = 0.2){
-    
-    points <- fiducial_pt_list[[index]]
-    y1 <- as.numeric(round(0.4*points[53,2] + 0.6*points[46,2]))
-    y2 <- as.numeric(round(0.1*points[46,2] + 0.9*points[53,2]))
-    x1 <- as.numeric(round((points[45,1] + points[46,1])/2))
-    x2 <- as.numeric(round((points[46,1] + points[76,1])/2))
-    if(x1 > x2)
-      x <- seq(x1,x2,3)
-    else
-      x <- seq(x1,x2,-3)
-    if(y1 > y2)
-      y <- seq(y1,y2,3)
-    else
-      y <- seq(y1,y2,-3)
-    diff <- max(img[x,y,1] + img[x,y,2] + img[x,y,3]) - min(img[x,y,1] + img[x,y,2] + img[x,y,3])
-    mat <- img[x,y,1]+img[x,y,2]+img[x,y,3]
-    skin_color <- get_skin_color(img, points)*3
-    threshold <- skin_color - thre_value
-    mean(mat < threshold)
-    return(c(diff, mean(mat < threshold)))
-  }
-  
   get_symmetric <- function(mat1, mat2){
     colnames(mat1) <- c("x", "y")
     colnames(mat2) <- c("x", "y")
@@ -307,23 +264,75 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (result)
   }
   
+  #get face folds
+  get_color_line <- function(idx1, idx2, img, points){
+    pt1 <- points[idx1,]
+    pt2 <- points[idx2,]
+    slope <- as.numeric((pt2[2]-pt1[2])/(pt2[1]-pt1[1]))
+    intercept <- as.numeric(pt1[2] - slope*pt1[1])
+    x <- as.numeric(pt1[1]):as.numeric(pt2[1])
+    y <- round(x*slope+intercept)
+    return (mean(img[x,y,1:3]))
+  }
+  
+  get_skin_color <- function(img, points){
+    c1 <- get_color_line(59, 69, img, points)
+    c2 <- get_color_line(57, 70, img, points)
+    c3 <- get_color_line(56, 71, img, points)
+    c4 <- get_color_line(55, 72, img, points)
+    c5 <- get_color_line(54, 73, img, points)
+    return (mean(c(c1, c2, c3, c4, c5), na.rm = T))
+  }
+  
+  get_color <- function(index, file, img, thre_value = 0.2, rate, points_num){
+    
+    points <- fiducial_pt_list[[index]]
+    y1 <- as.numeric(round(rate[1]*points[points_num[1],2] + rate[2]*points[points_num[2],2]))
+    y2 <- as.numeric(round(rate[3]*points[points_num[3],2] + rate[4]*points[points_num[4],2]))
+    x1 <- as.numeric(round(rate[5]*points[points_num[5],1] + rate[6]*points[points_num[6],1]))
+    x2 <- as.numeric(round(rate[7]*points[points_num[7],1] + rate[8]*points[points_num[8],1]))
+    if(x1 > x2)
+      x <- seq(x1,x2,-3)
+    else
+      x <- seq(x1,x2,3)
+    if(y1 > y2)
+      y <- seq(y1,y2,-3)
+    else
+      y <- seq(y1,y2,3)
+    diff <- max(img[x,y,1] + img[x,y,2] + img[x,y,3]) - min(img[x,y,1] + img[x,y,2] + img[x,y,3])
+    mat <- img[x,y,1]+img[x,y,2]+img[x,y,3]
+    skin_color <- get_skin_color(img, points)*3
+    threshold <- skin_color - thre_value
+    mean(mat < threshold)
+    return(c(diff, mean(mat < threshold)))
+  }
+  
   get_used_color = function(index, file = image_file){
     
     image.path_sub = paste0(file, sprintf("%04d", index), ".jpg")
     image.list_sub = EBImage::readImage(image.path_sub)
     img = Image(image.list_sub, colormode = 'Color')
     
-    eyebrow_feature<-get_eyebrow(index, file, img)
-    face_folds<-get_color(index, file, img)
+    eyebrow_feature1<-get_color(index, file, img, thre_value = 0.1,
+                                rate = c(0.9,0.1,-1,2,0.15,0.85,0.85,0.15),
+                                points_num = c(23,22,23,22,23,27,23,27))
+    face_folds1<-get_color(index, file, img, thre_value = 0.2,
+                           rate = c(0.4,0.6,0.9,0.1,0.5,0.5,0.5,0.5),
+                           points_num = c(53,46,53,46,46,54,46,76))
+    face_folds2<-get_color(index, file, img, thre_value = 0.2,
+                           rate = c(0.9,0.1,0.3,0.7,0.5,0.5,0.7,0.3),
+                           points_num = c(46,47,46,47,47,47,46,76))
+    face_folds3<-get_color(index, file, img, thre_value = 0.2,
+                           rate = c(0.5,0.5,0.8,0.2,0.3,0.7,0.3,0.7),
+                           points_num = c(53,55,53,55,53,54,54,74))
     
-    return(c(eyebrow_feature, face_folds))
+    return(c(eyebrow_feature1, face_folds1, face_folds2, face_folds3))
     
   }
   
   load("../output/ave_points.RData")
   load("../output/distance.RData")
   
-  #找每一个emotion里面的diff 算distance return出来百分比，现在的结果是一个数，一个testcase的一个点的一个emotion的百分比
   get_diff <- function(emo_index, point_ind, test, idx){
     dis <- distance[[point_ind]][idx]
     pt <- test[point_ind,]-ave_points[[emo_index]][point_ind,]
@@ -331,12 +340,11 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (mean(test_dis < dis))
   }
   
-  #一个testcase的一个点的所有emotion
+
   get_test <- function(point_ind, test, idx){
     return (map(c(1:22), function(x){get_diff(x, point_ind, test, idx[[x]])}) %>% unlist())
   }
   
-  #testset的一个点的所有emotion
   get_ptind <- function(point_ind, test, idx){
     return (t(sapply(test, function(x){get_test(point_ind, x, idx)})))
   }
@@ -346,9 +354,9 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
   var <- map(importantpts, function(x){get_ptind(x, test[index], idx)})
   
   dist_feature <- t(sapply(test[index], get_result))
-  #used_color <- t(sapply(index, get_used_color, file = image_file))
+  used_color <- t(sapply(index, get_used_color, file = image_file))
   feature_withemo_data <- cbind(dist_feature,
-                                #used_color,
+                                used_color,
                                 var[[1]], var[[2]], #var[[3]], var[[4]],var[[5]],var[[6]],var[[7]],var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]], var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]],
                                 info$emotion_idx[index]
                                 )
