@@ -68,7 +68,7 @@ library(xgboost)
 ### Step 0 set work directories
 ```{r wkdir, eval=FALSE}
 set.seed(0)
-setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/xjx")
+setwd("~/Documents/GitHub/Spring2020-Project3-group8/xjx")
 # here replace it with your own path or manually set it in RStudio to where this rmd file is located. 
 # use relative path for reproducibility
 ```
@@ -212,6 +212,8 @@ if(run.dataprocess.diff_points){
   save(diff_points, file="../output/diff_points.Rdata")
   save(distance, file="../output/distance.Rdata")
 }
+load("../output/diff_points.Rdata")
+load("../output/distance.Rdata")
 ```
 
 
@@ -262,7 +264,8 @@ if(run.feature.test){
   tm_feature_test <- system.time(dat_test <- feature(fiducial_pt_list, test_idx, image_file = "../data/train_set/images/", all_points))
   save(dat_test, file="../output/feature_test.RData")
 }
-
+load("../output/feature_train.RData")
+load("../output/feature_test.RData")
 ```
 
 ### Step 4: Train a classification model with training features and responses
@@ -499,7 +502,7 @@ pred_gbm_class2 = apply(pred_gbm2,1,which.max)
 ```
 
 ```{r}
-gbm_accu
+gbm_accuracy_test
 mean(dat_test2$emotion_idx == pred_gbm_class2)
 ```
 
