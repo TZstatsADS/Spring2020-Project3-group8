@@ -316,6 +316,9 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     eyebrow_feature1<-get_color(index, file, img, thre_value = 0.1,
                                 rate = c(0.9,0.1,-1,2,0.15,0.85,0.85,0.15),
                                 points_num = c(23,22,23,22,23,27,23,27))
+    eyebrow_feature2<-get_color(index, file, img, thre_value = 0.1,
+                                rate = c(0.9,0.1,0.1,0.9,0.2,0.8,0.8,0.2),
+                                points_num = c(23,35,23,35,23,27,23,27))
     face_folds1<-get_color(index, file, img, thre_value = 0.2,
                            rate = c(0.4,0.6,0.9,0.1,0.5,0.5,0.5,0.5),
                            points_num = c(53,46,53,46,46,54,46,76))
@@ -326,7 +329,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
                            rate = c(0.5,0.5,0.8,0.2,0.3,0.7,0.3,0.7),
                            points_num = c(53,55,53,55,53,54,54,74))
     
-    return(c(eyebrow_feature1, face_folds1, face_folds2, face_folds3))
+    return(c(eyebrow_feature1, eyebrow_feature2, face_folds1, face_folds2, face_folds3))
     
   }
   
@@ -357,7 +360,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
   used_color <- t(sapply(index, get_used_color, file = image_file))
   feature_withemo_data <- cbind(dist_feature,
                                 used_color,
-                                var[[1]], var[[2]], #var[[3]], var[[4]],var[[5]],var[[6]],var[[7]],var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]], var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]],
+                                #var[[1]], var[[2]], var[[3]], var[[4]], var[[5]], var[[6]], var[[7]], var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]], var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]],
                                 info$emotion_idx[index]
                                 )
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")

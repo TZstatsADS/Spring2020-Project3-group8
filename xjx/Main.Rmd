@@ -67,8 +67,8 @@ library(xgboost)
 
 ### Step 0 set work directories
 ```{r wkdir, eval=FALSE}
-set.seed(0)
-setwd("~/Documents/GitHub/Spring2020-Project3-group8/xjx")
+set.seed(1)
+setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/xjx")
 # here replace it with your own path or manually set it in RStudio to where this rmd file is located. 
 # use relative path for reproducibility
 ```
