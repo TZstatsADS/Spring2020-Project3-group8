@@ -128,8 +128,8 @@ run.dataprocess.diff_points = FALSE # save diff, distance of each point to its m
 
 run.cv = FALSE # run cross-validation on the training set
 K = 5  # number of CV folds
-run.feature.train = FALSE # process features for training set
-run.feature.test = FALSE # process features for test set
+run.feature.train = TRUE # process features for training set
+run.feature.test = TRUE # process features for test set
 
 run.train.gbm = TRUE # run gbm training model
 run.train.svm = TRUE # run svm training model
