@@ -536,7 +536,6 @@ if(run.baseline){
 confusionMatrix(factor(gbm_pred_class_baseline), dat_test$emotion_idx)
 ```
 
-
 ```{r}
 #accuracy of the above gbm model
 if(run.baseline){
@@ -693,7 +692,7 @@ xgb_accuracy_test_color = mean(dat_test_color$emotion_idx == xgb_pred_class_colo
 print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test_color))
 ```
 
-### Summarize Accurcy
+### Summarize Accuracy
 
 ```{r}
 my_theme = theme_light() + 

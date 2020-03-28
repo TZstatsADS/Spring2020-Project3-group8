@@ -11,6 +11,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(EBImage)
 ```
 
+Take one photo as an example to explain the process of data preprocessing.
+
+### Step 0: Plot original photo with points
+
 ```{r}
 indices = 920
 image.path_sub <- paste0(train_image_dir, sprintf("%04d", indices), ".jpg")
@@ -28,6 +32,8 @@ add_point <- function(n){text(x = fiducial_pt_list_sub[[1]][n,1],
 lapply(1:78,add_point)
 
 ```
+
+### Step 1: Determine symmetry axis and rotate photo
 
 ```{r}
 points = data.frame(x = fiducial_pt_list_sub[[1]][1:78,1], y = fiducial_pt_list_sub[[1]][1:78,2])
@@ -151,6 +157,8 @@ points(new_xhat, new_y0, col = 'red')
 points(new_pos$x, new_pos$y, col = 'blue')
 ```
 
+### Step 2: Determine the zoom ratio and scale the photo
+
 ```{r}
 fixdist = -170
 my_fixdist = apply(new_points[c(1,10),],2,mean)[2] - new_points[44,][2]
@@ -167,7 +175,7 @@ new_add_point2 <- function(n){text(x = new2_points[n,1],
 lapply(1:78,new_add_point2)
 ```
 
-
+### Step 3: Determine translation distance and translation
 
 ```{r}
 img_translate = translate(img_zoom, c(500-new2_points[37,1], 375-new2_points[37,2]))
