@@ -252,7 +252,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     mat2 <- mat[double$x2,]
     symmetricity <- get_symmetric(mat1, mat2)
     
-    # distance between face and mouth
+    ## distance between face and mouth
     face_to_mouth_dist1 <- get_distance(mat[c(71,56),]) 
     face_to_mouth_dist2 <- get_distance(mat[c(69,50),]) 
     face_to_mouth_dist3 <- get_distance(mat[c(73,54),]) 
@@ -260,15 +260,15 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     face_to_mouth_dist5 <- get_distance(mat[c(64,50),]) 
     face_to_mouth_dist6 <- get_distance(mat[c(78,54),]) 
     
-    # Face angle
+    ## Face angle
     face_angle1 <- get_distance(mat[c(67,70),])
     face_angle2 <- get_distance(mat[c(75,72),])
     
-    # mouth a
+    ## mouth a
     mouth_a1 <- get_a(mat[c(50,57:54),])
     mouth_a2 <- get_a(mat[c(50,63:61,54),])
     
-    # eyebrow a
+    ## eyebrow a
     eyebrow_a1 <- get_a(mat[c(19:23),])
     eyebrow_a2 <- get_a(mat[c(27:31),])
     
