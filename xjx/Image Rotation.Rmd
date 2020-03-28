@@ -17,6 +17,11 @@ Take one photo as an example to explain the process of data preprocessing.
 
 ```{r}
 indices = 920
+setwd("~/Documents/GitHub/Spring2020-Project3-group8/xjx")
+train_dir <- "../data/train_set/"
+train_image_dir <- paste(train_dir, "images/", sep="")
+train_pt_dir <- paste(train_dir,  "points/", sep="")
+train_label_path <- paste(train_dir, "label.csv", sep="") 
 image.path_sub <- paste0(train_image_dir, sprintf("%04d", indices), ".jpg")
 image.list_sub = list(EBImage::readImage(image.path_sub))
 img = Image(image.list_sub[[1]], colormode = 'Color')
@@ -25,12 +30,15 @@ display(img, method = 'raster')
 
 ```{r}
 display(img, method="raster")
+load("../output/fiducial_pt_list.RData")
 fiducial_pt_list_sub <- fiducial_pt_list[indices]
 add_point <- function(n){text(x = fiducial_pt_list_sub[[1]][n,1],
                               y = fiducial_pt_list_sub[[1]][n,2],
                               label = as.character(n), col = "white", cex = 0.8)}
-lapply(1:78,add_point)
-
+#lapply(1:78,add_point)
+for(i in 1:78){
+  add_point(i)
+}
 ```
 
 ### Step 1: Determine symmetry axis and rotate photo
@@ -123,7 +131,10 @@ display(img_rotate, method="raster")
 new_add_point <- function(n){text(x = new_points[n,1],
                               y = new_points[n,2],
                               label = as.character(n), col = "white", cex = 0.8)}
-lapply(1:78,new_add_point)
+#lapply(1:78,new_add_point)
+for(i in 1:78){
+  new_add_point(i)
+}
 ```
 
 ```{r}
@@ -172,7 +183,10 @@ display(img_zoom, method="raster")
 new_add_point2 <- function(n){text(x = new2_points[n,1],
                               y = new2_points[n,2],
                               label = as.character(n), col = "white", cex = 0.8)}
-lapply(1:78,new_add_point2)
+#lapply(1:78,new_add_point2)
+for(i in 1:78){
+  new_add_point2(i)
+}
 ```
 
 ### Step 3: Determine translation distance and translation
@@ -197,8 +211,10 @@ display(img_translate, method="raster")
 new3_add_point <- function(n){text(x = new3_points[n,1],
                               y = new3_points[n,2],
                               label = as.character(n), col = "white", cex = 0.8)}
-lapply(1:78,new3_add_point)
-
+#lapply(1:78,new3_add_point)
+for(i in 1:78){
+  new3_add_point(i)
+}
 ```
 
 ```{r}
