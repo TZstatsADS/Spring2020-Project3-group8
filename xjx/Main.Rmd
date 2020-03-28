@@ -289,7 +289,7 @@ Call the train model and test model from library.
 
 + In this Starter Code, we use KNN to do classification. 
 
-### 1.Baseline feature in GBM
+### 1.Baseline model with dist feature in GBM
 
 ```{r}
 if(run.baseline){
@@ -455,7 +455,7 @@ if(run.train.xgb){
 
 ## Step 5: Run test on test images
 
-### 1.Baseline feature in GBM
+### 1.Baseline model with dist feature in GBM
 
 ```{r}
 if(run.baseline){
