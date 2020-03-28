@@ -5,9 +5,22 @@ output:
   html_document:
     df_print: paged
 ---
-In your final repo, there should be an R markdown file that organizes **all computational steps** for evaluating your proposed Facial Expression Recognition framework. 
 
-This file is currently a template for running evaluation experiments. You should update it according to your codes but following precisely the same structure. 
+## Abstract
+
+all training time = model training time + feature extraction time
+
+|       | test accuracy | model training time | all training time | test prediction time | all prediction time | 
+| ------ | ------ | ------ | ------ | ------ | ------ | 
+| gbm_baseline | 45.6% | 1960s | 1961s | 13.3s | 13.4s |
+| gbm_improved | 46.2% | 42.9s | 60s | 0.03s | 4.12s | 
+| gbm_colored | 48.1% | 45.2s | 181s | 0.04s | 36.8s |
+| svm_improved | 57.1% | 2.39s | 19.5s | 0.20s | 4.29s |
+| svm_colored | 60.5% | 2.38s | 138s | 0.20s | 36.9s |
+| xgb_improved | 52.9% | 45.2s | 50.6s | 0.06s | 4.15s |
+| xgb_colored | 55.4% | 31.7s | 168s | 0.06s | 36.8s |
+
+The accuracy and time shown in the table above are from a certain measurement and may not exactly match the results shown in the PDF document.
 
 ```{r message=FALSE}
 if(!require("EBImage")){
@@ -75,6 +88,7 @@ setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/xj
 ```
 
 Provide directories for training images. Training images and Training fiducial points will be in different subfolders. 
+
 ```{r}
 train_dir <- "../data/train_set/" # This will be modified for different data sets.
 train_image_dir <- paste(train_dir, "images/", sep="")
@@ -106,18 +120,24 @@ run.dataprocess.diff_points = FALSE # save diff, distance of each point to its m
 
 run.cv = FALSE # run cross-validation on the training set
 K = 5  # number of CV folds
-run.feature.train = TRUE # process features for training set
-run.feature.test = TRUE # process features for test set
+run.feature.train = FALSE # process features for training set
+run.feature.test = FALSE # process features for test set
 
 run.train.gbm = TRUE # run gbm training model
 run.train.svm = TRUE # run svm training model
 run.train.xgb = TRUE # run xgb training model
 
-run.test = TRUE # run evaluation on an independent test set
 ```
 
+The cross-validation method takes too much time, and the model we choose does not need it. Although it works well, we did not run it in this document.
 
 ## Step 2: import data and train-test split 
+
+This time we did not use a random 20% photos as the test set, but instead randomized all the pictures of 20% of the people as the test set. Because when we face the problem of facial expression recognition, there is a high probability we encounter strangers. So the expectation of this selection method is closer to the real classification accuracy.
+
+However, we only have 2500 pictures and 230 people, which is not enough for accurate training. So when we randomly select 20% of the people, it is likely that there is too little training for a certain expression in the training set. This may increase the variance of classification accuracy.
+
+This effect is limited to the tests in this document. The tests in the classroom will use all 2,500 training sets, the expectations and variances mentioned above have nothing to do with it.
 
 ```{r}
 #train-test split
@@ -127,7 +147,7 @@ n_train <- round(n*(4/5), 0)
 train_identity = sample(info$identity %>% unique(), n_train, replace = F)
 train_idx <- which(info$identity %in% train_identity)
 test_idx <- setdiff(info$Index,train_idx)
-train_idx = sample(train_idx, length(train_idx), replace = F)
+train_idx <- sample(train_idx, length(train_idx), replace = F)
 ```
 
 Fiducial points are stored in matlab format. In this step, we read them and store them in a list.
@@ -762,5 +782,9 @@ tm.test.with %>% pivot_longer(1:ncol(tm.test.with)) %>%
   my_theme
 ```
 
-###Reference
+## Reference
+
 - Du, S., Tao, Y., & Martinez, A. M. (2014). Compound facial expressions of emotion. Proceedings of the National Academy of Sciences, 111(15), E1454-E1462.
+
+- Cross-Validation on Xgboost, Fall2019 Project3 Section2 Group5. 
+
