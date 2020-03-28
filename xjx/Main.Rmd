@@ -8,17 +8,23 @@ output:
 
 ## Abstract
 
-all training time = model training time + feature extraction time
+Computer configuration
+System: Microsoft Windows 10 x64
+CPU: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz(3600 MHz)
+GPU: NVIDIA GeForce RTX 2070 SUPER (8192 MB)
+RAM: 16.00 GB (2400 MHz)
+
+all training time = model training time + feature extraction time + data preprocessing time
 
 |       | test accuracy | model training time | all training time | test prediction time | all prediction time | 
 | ------ | ------ | ------ | ------ | ------ | ------ | 
 | gbm_baseline | 45.6% | 1960s | 1961s | 13.3s | 13.4s |
-| gbm_improved | 46.2% | 42.9s | 60s | 0.03s | 4.12s | 
-| gbm_colored | 48.1% | 45.2s | 181s | 0.04s | 36.8s |
-| svm_improved | 57.1% | 2.39s | 19.5s | 0.20s | 4.29s |
-| svm_colored | 60.5% | 2.38s | 138s | 0.20s | 36.9s |
-| xgb_improved | 52.9% | 45.2s | 50.6s | 0.06s | 4.15s |
-| xgb_colored | 55.4% | 31.7s | 168s | 0.06s | 36.8s |
+| gbm_improved | 46.2% | 42.9s | 67.2s | 0.03s | 5.92s | 
+| gbm_colored | 48.1% | 45.2s | 188s | 0.04s | 68.6s |
+| svm_improved | 57.1% | 2.39s | 26.7s | 0.20s | 6.09s |
+| svm_colored | 60.5% | 2.38s | 146s | 0.20s | 38.8s |
+| xgb_improved | 52.9% | 45.2s | 67.2s | 0.06s | 5.95s |
+| xgb_colored | 55.4% | 31.7s | 175s | 0.06s | 38.6s |
 
 The accuracy and time shown in the table above are from a certain measurement and may not exactly match the results shown in the PDF document.
 
@@ -668,8 +674,6 @@ if(run.baseline){
 
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
 
-#### Train time without feature extraction
-
 ```{r running_time}
 if(run.baseline){
   tm.train = tibble(gbm_baseline = tm.gbm.train_baseline[3], 
@@ -704,6 +708,42 @@ if(run.baseline){
 
 ```
 
+```{r running_time}
+if(run.baseline){
+  tm.train.with = tibble(gbm_baseline = tm.gbm.train_baseline[3]+tm_feature_train_baseline[3],
+                    gbm_improved = tm.gbm.train[3]+tm_feature_train[3]+tm.run.all_points[3]*0.8,
+                    svm_improved = tm.svm.train[3]+tm_feature_train[3]+tm.run.all_points[3]*0.8,
+                    xgb_improved = tm.xgb.train[3]+tm_feature_train[3]+tm.run.all_points[3]*0.8,
+                    gbm_color = tm.gbm.train_color[3]+tm_feature_train_color[3]+tm.run.all_points[3]*0.8,
+                    svm_color = tm.svm.train_color[3]+tm_feature_train_color[3]+tm.run.all_points[3]*0.8,
+                    xgb_color = tm.xgb.train_color[3]+tm_feature_train_color[3]+tm.run.all_points[3]*0.8)
+  tm.test.with= tibble(gbm_baseline = tm.gbm.test_baseline[3]+tm_feature_test_baseline[3], 
+                  gbm_improved = tm.gbm.test[3]+tm_feature_test[3]+tm.run.all_points[3]*0.2, 
+                  svm_improved = tm.svm.test[3]+tm_feature_test[3]+tm.run.all_points[3]*0.2, 
+                  xgb_improved = tm.xgb.test[3]+tm_feature_test[3]+tm.run.all_points[3]*0.2, 
+                  gbm_color = tm.gbm.test_color[3]+tm_feature_test_color[3]+tm.run.all_points[3]*0.2, 
+                  svm_color = tm.svm.test_color[3]+tm_feature_test_color[3]+tm.run.all_points[3]*0.2, 
+                  xgb_color = tm.xgb.test_color[3]+tm_feature_test_color[3]+tm.run.all_points[3]*0.2)
+}else{
+  tm.train.with = tibble(gbm_improved = tm.gbm.train[3]+tm_feature_train[3]+tm.run.all_points[3]*0.8, 
+                    svm_improved = tm.svm.train[3]+tm_feature_train[3]+tm.run.all_points[3]*0.8, 
+                    xgb_improved = tm.xgb.train[3]+tm_feature_train[3]+tm.run.all_points[3]*0.8, 
+                    gbm_color = tm.gbm.train_color[3]+tm_feature_train_color[3]+tm.run.all_points[3]*0.8, 
+                    svm_color = tm.svm.train_color[3]+tm_feature_train_color[3]+tm.run.all_points[3]*0.8, 
+                    xgb_color = tm.xgb.train_color[3]+tm_feature_train_color[3]+tm.run.all_points[3]*0.8)
+  tm.test.with = tibble(gbm_improved = tm.gbm.test[3]+tm_feature_test[3]+tm.run.all_points[3]*0.2, 
+                   svm_improved = tm.svm.test[3]+tm_feature_test[3]+tm.run.all_points[3]*0.2, 
+                   xgb_improved = tm.xgb.test[3]+tm_feature_test[3]+tm.run.all_points[3]*0.2, 
+                   gbm_color = tm.gbm.test_color[3]+tm_feature_test_color[3]+tm.run.all_points[3]*0.2, 
+                   svm_color = tm.svm.test_color[3]+tm_feature_test_color[3]+tm.run.all_points[3]*0.2, 
+                   xgb_color = tm.xgb.test_color[3]+tm_feature_test_color[3]+tm.run.all_points[3]*0.2)
+}
+
+
+```
+
+#### Train time without feature extraction
+
 ```{r}
 tm.train %>% pivot_longer(1:ncol(tm.train)) %>% 
   ggplot(aes(x = name, fill = name)) +
@@ -717,40 +757,6 @@ tm.train %>% pivot_longer(1:ncol(tm.train)) %>%
 
 #### Train time with feature extraction
 
-```{r running_time}
-if(run.baseline){
-  tm.train.with = tibble(gbm_baseline = tm.gbm.train_baseline[3]+tm_feature_train_baseline[3],
-                    gbm_improved = tm.gbm.train[3]+tm_feature_train[3],
-                    svm_improved = tm.svm.train[3]+tm_feature_train[3],
-                    xgb_improved = tm.xgb.train[3]+tm_feature_train[3],
-                    gbm_color = tm.gbm.train_color[3]+tm_feature_train_color[3],
-                    svm_color = tm.svm.train_color[3]+tm_feature_train_color[3],
-                    xgb_color = tm.xgb.train_color[3]+tm_feature_train_color[3])
-  tm.test.with= tibble(gbm_baseline = tm.gbm.test_baseline[3]+tm_feature_test_baseline[3], 
-                  gbm_improved = tm.gbm.test[3]+tm_feature_test[3], 
-                  svm_improved = tm.svm.test[3]+tm_feature_test[3], 
-                  xgb_improved = tm.xgb.test[3]+tm_feature_test[3], 
-                  gbm_color = tm.gbm.test_color[3]+tm_feature_test_color[3], 
-                  svm_color = tm.svm.test_color[3]+tm_feature_test_color[3], 
-                  xgb_color = tm.xgb.test_color[3]+tm_feature_test_color[3])
-}else{
-  tm.train.with = tibble(gbm_improved = tm.gbm.train[3]+tm_feature_train[3], 
-                    svm_improved = tm.svm.train[3]+tm_feature_train[3], 
-                    xgb_improved = tm.xgb.train[3]+tm_feature_train[3], 
-                    gbm_color = tm.gbm.train_color[3]+tm_feature_train_color[3], 
-                    svm_color = tm.svm.train_color[3]+tm_feature_train_color[3], 
-                    xgb_color = tm.xgb.train_color[3]+tm_feature_train_color[3])
-  tm.test.with = tibble(gbm_improved = tm.gbm.test[3]+tm_feature_test[3], 
-                   svm_improved = tm.svm.test[3]+tm_feature_test[3], 
-                   xgb_improved = tm.xgb.test[3]+tm_feature_test[3], 
-                   gbm_color = tm.gbm.test_color[3]+tm_feature_test_color[3], 
-                   svm_color = tm.svm.test_color[3]+tm_feature_test_color[3], 
-                   xgb_color = tm.xgb.test_color[3]+tm_feature_test_color[3])
-}
-
-
-```
-
 ```{r}
 tm.train.with %>% pivot_longer(1:ncol(tm.train.with)) %>% 
   ggplot(aes(x = name, fill = name)) +
@@ -762,6 +768,8 @@ tm.train.with %>% pivot_longer(1:ncol(tm.train.with)) %>%
 
 ```
 
+#### Test time without feature extraction
+
 ```{r}
 tm.test %>% pivot_longer(1:ncol(tm.test)) %>% 
   ggplot(aes(x = name, fill = name)) +
@@ -771,6 +779,8 @@ tm.test %>% pivot_longer(1:ncol(tm.test)) %>%
   scale_y_log10() + 
   my_theme
 ```
+
+#### Test time with feature extraction
 
 ```{r}
 tm.test.with %>% pivot_longer(1:ncol(tm.test.with)) %>% 
