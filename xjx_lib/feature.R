@@ -4,8 +4,25 @@
 
 source("../xjx_lib/change_images.R")
 source("../xjx_lib/inv_change_images.R")
-feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", test = all_points, colorfeature = FALSE){
 
+feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", test = all_points, colorfeature = FALSE){
+  # input_list: 
+  #   Default: fiducial_pt_list
+  #   A list Which indicates the original points position
+  # index:
+  #   A vector indicates the rows that need feature extraction
+  # image_file:
+  #   Default: "../data/train_set/images/"
+  #   A path indicates where the photo is located
+  # test:
+  #   Default: all_points
+  #   A set of points used to extract features
+  # colorfeature:
+  #   Default: FALSE
+  #   If true, the function will extract color features
+  
+  
+  # Get the distance between each two points in mat
   get_distance <- function(mat){
     colnames(mat) <- c("x", "y")
     dif <- as.data.frame(diff(mat))
@@ -13,6 +30,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (dif$dist)
   }
   
+  # Get the distance between each points in mat to their center
   get_distance_center <- function(mat, pt){
     colnames(mat) <- c("x", "y")
     n = nrow(mat)
@@ -24,6 +42,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (dif$dist)
   }
   
+  # Get the slope between each two points in mat
   get_angle <- function(mat){
     colnames(mat) <- c("x", "y")
     dif <- as.data.frame(diff(mat))
@@ -31,6 +50,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (dif$angle)
   }
   
+  # Get fitted quadratic coefficient of all pointes in mat
   get_a <- function(mat){
     x <- mat[,1]
     y <- mat[,2]
@@ -38,6 +58,9 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (model$coefficients[3])
   }
   
+  
+  # This feature is not suitable after testing, so we did not use it
+  # Get color feature in area eyebrow
   get_eyebrow=function(index, file, img){
 
     points=input_list[[index]]
@@ -74,6 +97,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return(rate)
   }
   
+  # Get the position difference of the symmetrical position points
   get_symmetric <- function(mat1, mat2){
     colnames(mat1) <- c("x", "y")
     colnames(mat2) <- c("x", "y")
@@ -82,6 +106,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (sqrt(mat[,1]^2 + mat[,2]^2))
   }
   
+  # Get all basic features which don't need images
   get_result <- function(mat,index){
     ## face dist
     facepoints <- mat[64:78,]
@@ -227,6 +252,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     mat2 <- mat[double$x2,]
     symmetricity <- get_symmetric(mat1, mat2)
     
+    # distance between face and mouth
     face_to_mouth_dist1 <- get_distance(mat[c(71,56),]) 
     face_to_mouth_dist2 <- get_distance(mat[c(69,50),]) 
     face_to_mouth_dist3 <- get_distance(mat[c(73,54),]) 
@@ -234,12 +260,15 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     face_to_mouth_dist5 <- get_distance(mat[c(64,50),]) 
     face_to_mouth_dist6 <- get_distance(mat[c(78,54),]) 
     
+    # Face angle
     face_angle1 <- get_distance(mat[c(67,70),])
     face_angle2 <- get_distance(mat[c(75,72),])
     
+    # mouth a
     mouth_a1 <- get_a(mat[c(50,57:54),])
     mouth_a2 <- get_a(mat[c(50,63:61,54),])
     
+    # eyebrow a
     eyebrow_a1 <- get_a(mat[c(19:23),])
     eyebrow_a2 <- get_a(mat[c(27:31),])
     
@@ -251,7 +280,8 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
                          nose_angle, nose_area, outer_area, inner_area, 
                          out_mouth_up_dist, out_mouth_up_angle, out_mouth_down_dist, 
                          out_mouth_down_angle, inner_mouth_up_dist, inner_mouth_up_angle, 
-                         inner_mouth_down_dist, inner_mouth_down_angle, #mat[-37,1]-500, mat[-37,2]-375,
+                         inner_mouth_down_dist, inner_mouth_down_angle,
+                         #mat[-37,1]-500, mat[-37,2]-375,
                          eyebrow_head_dist,eyebrow_eye_dist1, eyebrow_eye_dist2,eyebrow_eye_dist3,eyebrow_eye_dist4, 
                          eyebrow_eye_dist5,eyebrow_cornor_nose_bridge_dist,inner_eye_corner_dist,outer_eye_corner_dist,
                          one_eye_width_dist,eye_height_dist1,eye_height_dist2,pupil_dist,eye_corner_nose_dist,eye_angle,
@@ -264,7 +294,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (result)
   }
   
-  #get face folds
+  # Get average color of a line
   get_color_line <- function(idx1, idx2, img, points){
     pt1 <- points[idx1,]
     pt2 <- points[idx2,]
@@ -275,6 +305,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (mean(img[x,y,1:3]))
   }
   
+  # Get average color of skin
   get_skin_color <- function(img, points){
     c1 <- get_color_line(59, 69, img, points)
     c2 <- get_color_line(57, 70, img, points)
@@ -284,6 +315,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (mean(c(c1, c2, c3, c4, c5), na.rm = T))
   }
   
+  # Get the proportion of relativeblack pixels in a certain area
   get_color <- function(index, file, img, thre_value = 0.2, rate, points_num){
     
     points <- fiducial_pt_list[[index]]
@@ -307,6 +339,7 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return(c(diff, mean(mat < threshold)))
   }
   
+  # Get all color features
   get_used_color = function(index, file = image_file){
     
     image.path_sub = paste0(file, sprintf("%04d", index), ".jpg")
@@ -336,6 +369,9 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
   load("../output/ave_points.RData")
   load("../output/distance.RData")
   
+  
+  # This feature is not suitable after testing, so we did not use it
+  # Get the distance between a point and the average point of a certain expression
   get_diff <- function(emo_index, point_ind, test, idx){
     dis <- distance[[point_ind]][idx]
     pt <- test[point_ind,]-ave_points[[emo_index]][point_ind,]
@@ -343,21 +379,26 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (mean(test_dis < dis))
   }
   
-
+  # Get the distance between a point and all the average point of a certain expression
   get_test <- function(point_ind, test, idx){
     return (map(c(1:22), function(x){get_diff(x, point_ind, test, idx[[x]])}) %>% unlist())
   }
   
+  # Get the distance between all selected point and all the average point of a certain expression
   get_ptind <- function(point_ind, test, idx){
     return (t(sapply(test, function(x){get_test(point_ind, x, idx)})))
   }
   
+  # Get variance feature
   #idx = map(1:22, ~with(info %>% filter(emotion_idx == .x), Index))
   #importantpts <- c(50, 54)
   #var <- map(importantpts, function(x){get_ptind(x, test[index], idx)})
   
+  # Get basic feature
   dist_feature <- t(sapply(test[index], get_result))
+  
   if(colorfeature){
+    # Get color feature
     used_color <- t(sapply(index, get_used_color, file = image_file))
     feature_withemo_data <- cbind(dist_feature, used_color, info$emotion_idx[index])
   }else{
@@ -367,8 +408,11 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
                                   )
   }
   
+  # Rename features
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
   feature_withemo_data <- as.data.frame(feature_withemo_data)
   feature_withemo_data$emotion_idx <- as.factor(feature_withemo_data$emotion_idx)
+  
+  # Return features
   return(feature_df = feature_withemo_data)
 }
