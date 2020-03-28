@@ -65,7 +65,8 @@ library(tidyverse)
 library(xgboost)  
 ```
 
-### Step 0 set work directories
+## Step 0 set work directories
+
 ```{r wkdir, eval=FALSE}
 set.seed(1)
 setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/xjx")
@@ -82,7 +83,7 @@ train_label_path <- paste(train_dir, "label.csv", sep="")
 ```
 
 
-### Step 1: set up controls for evaluation experiments.
+## Step 1: set up controls for evaluation experiments.
 
 In this chunk, we have a set of controls for the evaluation experiments. 
 
@@ -98,24 +99,26 @@ In this chunk, we have a set of controls for the evaluation experiments.
 ```{r exp_setup}
 run.baseline = FALSE # run baseline feature, slow!
 
-run.dataprocess.fiducial_pt_list = TRUE # save fiducial_pt_list
-run.dataprocess.all_points = TRUE # save all_points, new data after rotate zoom and move
-run.dataprocess.ave_points = TRUE # save ave_points, average data of 22 emotions
-run.dataprocess.diff_points = TRUE # save diff, distance of each point to its mean
+run.dataprocess.fiducial_pt_list = FALSE # save fiducial_pt_list
+run.dataprocess.all_points = FALSE # save all_points, new data after rotate zoom and move
+run.dataprocess.ave_points = FALSE # save ave_points, average data of 22 emotions
+run.dataprocess.diff_points = FALSE # save diff, distance of each point to its mean
 
 run.cv = FALSE # run cross-validation on the training set
 K = 5  # number of CV folds
 run.feature.train = TRUE # process features for training set
-run.test = TRUE # run evaluation on an independent test set
 run.feature.test = TRUE # process features for test set
 
 run.train.gbm = TRUE # run gbm training model
 run.train.svm = TRUE # run svm training model
 run.train.xgb = TRUE # run xgb training model
+
+run.test = TRUE # run evaluation on an independent test set
 ```
 
 
-### Step 2: import data and train-test split 
+## Step 2: import data and train-test split 
+
 ```{r}
 #train-test split
 info <- read.csv(train_label_path)
@@ -217,7 +220,7 @@ load("../output/distance.Rdata")
 ```
 
 
-### Step 3: construct features and responses
+## Step 3: construct features and responses
 
 + The follow plots show how pairwise distance between fiducial points can work as feature for facial emotion recognition.
 
@@ -255,20 +258,23 @@ if(run.baseline){
 
 tm_feature_train <- NA
 if(run.feature.train){
-  tm_feature_train <- system.time(dat_train <- feature(fiducial_pt_list, train_idx, image_file = "../data/train_set/images/", all_points))
+  tm_feature_train <- system.time(dat_train <- feature(fiducial_pt_list, train_idx, image_file = "../data/train_set/images/", all_points, colorfeature = FALSE))
   save(dat_train, file="../output/feature_train.RData")
+  tm_feature_train_color <- system.time(dat_train_color <- feature(fiducial_pt_list, train_idx, image_file = "../data/train_set/images/", all_points, colorfeature = TRUE))
+  save(dat_train, file="../output/feature_train_color.RData")
 }
 
 tm_feature_test <- NA
 if(run.feature.test){
-  tm_feature_test <- system.time(dat_test <- feature(fiducial_pt_list, test_idx, image_file = "../data/train_set/images/", all_points))
+  tm_feature_test <- system.time(dat_test <- feature(fiducial_pt_list, test_idx, image_file = "../data/train_set/images/", all_points, colorfeature = FALSE))
   save(dat_test, file="../output/feature_test.RData")
+  tm_feature_test_color <- system.time(dat_test_color <- feature(fiducial_pt_list, test_idx, image_file = "../data/train_set/images/", all_points, colorfeature = TRUE))
+  save(dat_test, file="../output/feature_test_color.RData")
 }
-load("../output/feature_train.RData")
-load("../output/feature_test.RData")
+
 ```
 
-### Step 4: Train a classification model with training features and responses
+## Step 4: Train a classification model with training features and responses
 Call the train model and test model from library. 
 
 `train.R` and `test.R` should be wrappers for all your model training steps and your classification/prediction steps. 
@@ -283,10 +289,11 @@ Call the train model and test model from library.
 
 + In this Starter Code, we use KNN to do classification. 
 
-GBM
+### 1.Baseline feature in GBM
 
 ```{r}
 if(run.baseline){
+  load("../output/feature_train_baseline.RData")
   if(run.train.gbm){
     source("../xjx_lib/train_gbm.R")
     gbm_result_train_baseline = gbm_train(dat_train_baseline, 200, 0.8, 0.1, 3)
@@ -295,9 +302,15 @@ if(run.baseline){
     save(gbm_model_baseline, file="../output/gbm_model_baseline.RData")
   }
 }
+```
 
+### 2.Improved feature in GBM
+
+```{r}
 if(run.train.gbm){
   source("../xjx_lib/train_gbm.R")
+  load("../output/feature_train.RData")
+  
   gbm_result_train = gbm_train(dat_train, 200, 0.8, 0.1, 3)
   gbm_model = gbm_result_train[[1]]
   tm.gbm.train = gbm_result_train[[2]]
@@ -305,21 +318,13 @@ if(run.train.gbm){
 }
 ```
 
-SVM
+### 3.Improved feature in SVM
 
 ```{r}
-if(run.baseline){
-  if(run.train.svm){
-    source("../xjx_lib/train_SVM.R")
-    svm_result_train_baseline = svm_train(dat_train_baseline, kernel = 'poly', degree = 1, gamma = 0.008)
-    svm_model_baseline = svm_result_train_baseline[[1]]
-    tm.svm.train_baseline = svm_result_train_baseline[[2]]
-    save(svm_model_baseline, file="../output/svm_model_baseline.RData")
-  }
-}
-
 if(run.train.svm){
   source("../xjx_lib/train_SVM.R")
+  load("../output/feature_train.RData")
+  
   svm_result_train = svm_train(dat_train, kernel = 'poly', degree = 1, gamma = 0.008)
   svm_model = svm_result_train[[1]]
   tm.svm.train = svm_result_train[[2]]
@@ -327,27 +332,12 @@ if(run.train.svm){
 }
 ```
 
-XGB
+### 4.Improved feature in XGB
 
 ```{r}
-if(run.baseline){
-  if(run.cv & run.train.xgb){
-    # Cross Validation to find Best parameter for XGBoost
-    source("../xjx_lib/xgb_tune.R")
-    
-    depth_baseline = c(5,10,15)
-    child_baseline = c(3,5,10)
-    xgb_result_cv_baseline = xgb_tune(dat_train_baseline, depth_baseline, child_baseline, K)
-    xgb_err_baseline = xgb_result_cv_baseline[[1]]
-    tm.xgb.cv_baseline = xgb_result_cv_baseline[[2]]
-    xgb_err_tune_baseline = xgb_err_baseline[[1]] %>% as.data.frame()
-    xgb_best_par_baseline = xgb_err_baseline[[2]] %>% as.data.frame()
-  }
-}
-
 if(run.cv & run.train.xgb){
-  # Cross Validation to find Best parameter for XGBoost
   source("../xjx_lib/xgb_tune.R")
+  load("../output/feature_train.RData")
   
   depth = c(5,10,15)
   child = c(3,5,10)
@@ -360,17 +350,6 @@ if(run.cv & run.train.xgb){
 ```
 
 ```{r}
-if(run.baseline){
-  if(run.cv & run.train.xgb){
-    colnames(xgb_err_tune_baseline) = c(3,5,10)
-    xgb_err_tune_baseline = gather(xgb_err_tune_baseline, key = "min_child")
-    xgb_err_tune_baseline$depth = rep(c(5,10,15),3)
-    xgb_err_tune_baseline
-    ggplot(xgb_err_tune_baseline, mapping = aes(x=min_child, y=depth, fill=value))+
-      geom_tile()
-  }
-}
-
 if(run.cv & run.train.xgb){
   colnames(xgb_err_tune) = c(3,5,10)
   xgb_err_tune = gather(xgb_err_tune, key = "min_child")
@@ -382,21 +361,10 @@ if(run.cv & run.train.xgb){
 ```
 
 ```{r}
-if(run.baseline){
-  source("../xjx_lib/xgb_train.R")
-  if(run.train.xgb){
-    if(run.cv)
-      xgb_result_baseline = xgb_train(dat_train_baseline, par = best_par_xgb)
-    else
-      xgb_result_baseline = xgb_train(dat_train_baseline)
-    xgb_model_baseline = xgb_result_baseline[[1]]
-    tm.xgb.train_baseline = xgb_result_baseline[[2]]
-    save(svm_model_baseline, file="../output/xgb_model_baseline.RData")
-  }
-}
-
 if(run.train.xgb){
   source("../xjx_lib/xgb_train.R")
+  load("../output/feature_train.RData")
+  
   if(run.cv)
     xgb_result = xgb_train(dat_train, par = best_par_xgb)
   else
@@ -408,19 +376,92 @@ if(run.train.xgb){
 
 ```
 
+### 5.Improved feature with color in GBM
+
+```{r}
+if(run.train.gbm){
+  source("../xjx_lib/train_gbm.R")
+  load("../output/feature_train_color.RData")
+  
+  gbm_result_train_color = gbm_train(dat_train_color, 200, 0.8, 0.1, 3)
+  gbm_model_color = gbm_result_train_color[[1]]
+  tm.gbm.train_color = gbm_result_train_color[[2]]
+  save(gbm_model_color, file="../output/gbm_model_color.RData")
+}
+```
+
+### 6.Improved feature with color in SVM
+
+```{r}
+if(run.train.svm){
+  source("../xjx_lib/train_SVM.R")
+  load("../output/feature_train_color.RData")
+  
+  svm_result_train_color = svm_train(dat_train_color, kernel = 'poly', degree = 1, gamma = 0.008)
+  svm_model_color = svm_result_train_color[[1]]
+  tm.svm.train_color = svm_result_train_color[[2]]
+  save(svm_model_color, file="../output/svm_model_color.RData")
+}
+```
+
+### 7.Improved feature in XGB
+
+```{r}
+if(run.cv & run.train.xgb){
+  source("../xjx_lib/xgb_tune.R")
+  load("../output/feature_train_color.RData")
+  
+  depth = c(5,10,15)
+  child = c(3,5,10)
+  xgb_result_cv_color = xgb_tune(dat_train_color, depth, child, K)
+  xgb_err_color = xgb_result_cv_color[[1]]
+  tm.xgb.cv_color = xgb_result_cv_color[[2]]
+  xgb_err_tune_color = xgb_err_color[[1]] %>% as.data.frame()
+  xgb_best_par_color = xgb_err_color[[2]] %>% as.data.frame()
+}
+```
+
+```{r}
+if(run.cv & run.train.xgb){
+  colnames(xgb_err_tune_color) = c(3,5,10)
+  xgb_err_tune_color = gather(xgb_err_tune_color, key = "min_child")
+  xgb_err_tune_color$depth = rep(c(5,10,15),3)
+  xgb_err_tune_color
+  ggplot(xgb_err_tune_color, mapping = aes(x=min_child, y=depth, fill=value))+
+    geom_tile()
+}
+```
+
+```{r}
+if(run.train.xgb){
+  source("../xjx_lib/xgb_train.R")
+  load("../output/feature_train_color.RData")
+  
+  if(run.cv)
+    xgb_result_color = xgb_train(dat_train_color, par = best_par_xgb)
+  else
+    xgb_result_color = xgb_train(dat_train_color)
+  xgb_model_color = xgb_result_color[[1]]
+  tm.xgb.train_color = xgb_result_color[[2]]
+  save(svm_model, file="../output/xgb_model_color.RData")
+}
+
+```
+
 
 #### Model selection with cross-validation
 
 * Train the model with the entire training set using the selected model (model parameter) via cross-validation.
 
-### Step 5: Run test on test images
+## Step 5: Run test on test images
 
-GBM
+### 1.Baseline feature in GBM
 
 ```{r}
 if(run.baseline){
   source("../xjx_lib/test_gbm.R")
   load("../output/gbm_model_baseline.RData")
+  load("../output/feature_test_baseline.RData")
   
   gbm_result_test_baseline = gbm_test(gbm_model_baseline, dat_test_baseline)
   gbm_pred_baseline = gbm_result_test_baseline[[1]]
@@ -436,9 +477,12 @@ if(run.baseline){
 }
 ```
 
+### 2.Improved feature in GBM
+
 ```{r}
 source("../xjx_lib/test_gbm.R")
 load("../output/gbm_model.RData")
+load("../output/feature_test.RData")
 
 gbm_result_test = gbm_test(gbm_model, dat_test)
 gbm_pred = gbm_result_test[[1]]
@@ -455,80 +499,12 @@ gbm_accuracy_test = mean(dat_test$emotion_idx == gbm_pred_class)
 print(paste0("The accuracy for gbm model is: ", gbm_accuracy_test))
 ```
 
-
- 6 groups (useless for now)
-
-```{r}
-g1 = c(1)
-g2 = c(2,8,9)
-g3 = c(3,10,15,19,22)
-g4 = c(4,11,14)
-g5 = c(5,7,12,17,18,20,21)
-g6 = c(6,13,16)
-```
-
-```{r}
-dat_train2 = dat_train %>% as_tibble %>% 
-  mutate(large_idx = 0) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g1, 1, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g2, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g3, 3, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g4, 4, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g5, 5, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g6, 6, large_idx)) %>% 
-  select(-emotion_idx) %>%
-  rename(emotion_idx = large_idx) %>%
-  as.data.frame()
-dat_test2 = dat_test %>% as_tibble %>% 
-  mutate(large_idx = 0) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g1, 1, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g2, 2, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g3, 3, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g4, 4, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g5, 5, large_idx)) %>% 
-  mutate(large_idx = ifelse(emotion_idx %in% g6, 6, large_idx)) %>% 
-  select(-emotion_idx) %>%
-  rename(emotion_idx = large_idx) %>%
-  as.data.frame()
-```
-
-```{r}
-gbm_model2 = gbm_train(dat_train2)[[1]]
-```
-
-```{r}
-pred_gbm2 = gbm_test(gbm_model2, dat_test2)[[1]]
-pred_gbm_class2 = apply(pred_gbm2,1,which.max)
-```
-
-```{r}
-gbm_accuracy_test
-mean(dat_test2$emotion_idx == pred_gbm_class2)
-```
-
-SVM
-
-```{r}
-if(run.baseline){
-  source("../xjx_lib/test_SVM.R")
-  load("../output/svm_model_baseline.RData")
-  
-  svm_result_test_baseline = svm_test(svm_model_baseline, dat_test_baseline)
-  svm_pred_class_baseline = svm_result_test_baseline[[1]]
-  tm.svm.test_baseline = svm_result_test_baseline[[2]]
-}
-```
-
-```{r}
-if(run.baseline){
-  svm_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == svm_pred_class_baseline)
-  print(paste0("The accuracy for svm model baseline is: ", svm_accuracy_test_baseline))
-}
-```
+### 3.Improved feature in SVM
 
 ```{r}
 source("../xjx_lib/test_SVM.R")
 load("../output/svm_model.RData")
+load("../output/feature_test.RData")
 
 svm_result_test = svm_test(svm_model, dat_test)
 svm_pred_class = svm_result_test[[1]]
@@ -544,30 +520,12 @@ svm_accuracy_test = mean(dat_test$emotion_idx == svm_pred_class)
 print(paste0("The accuracy for svm model is: ", svm_accuracy_test))
 ```
 
-XGB
-
-```{r}
-if(run.baseline){
-  source("../xjx_lib/xgb_test.R")
-  load("../output/xgb_model_baseline.RData")
-  
-  xgb_result_test_baseline = xgb_test(xgb_model_baseline, dat_test_baseline[,-ncol(dat_test_baseline)])
-  xgb_pred_baseline = xgb_result_test_baseline[[1]]
-  tm.xgb.test_baseline = xgb_result_test_baseline[[2]]
-  xgb_pred_class_baseline = apply(xgb_pred_baseline, 1, which.max) - 1
-}
-```
-
-```{r}
-if(run.baseline){
-  xgb_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == xgb_pred_class_baseline)
-  print(paste0("The accuracy for xgb model baseline is: ", xgb_accuracy_test_baseline))
-}
-```
+### 4.Improved feature in XGB
 
 ```{r}
 source("../xjx_lib/xgb_test.R")
 load("../output/xgb_model.RData")
+load("../output/feature_test.RData")
 
 xgb_result_test = xgb_test(xgb_model, dat_test[,-ncol(dat_test)])
 xgb_pred = xgb_result_test[[1]]
@@ -584,89 +542,225 @@ xgb_accuracy_test = mean(dat_test$emotion_idx == xgb_pred_class)
 print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test))
 ```
 
+### 5.Improved feature with color in GBM
+
+```{r}
+source("../xjx_lib/test_gbm.R")
+load("../output/gbm_model_color.RData")
+load("../output/feature_test_color.RData")
+
+gbm_result_test_color = gbm_test(gbm_model_color, dat_test_color)
+gbm_pred_color = gbm_result_test_color[[1]]
+tm.gbm.test_color = gbm_result_test_color[[2]]
+gbm_pred_class_color = apply(gbm_pred_color, 1, which.max)
+```
+
+```{r}
+confusionMatrix(factor(gbm_pred_class_color), dat_test_color$emotion_idx)
+```
+
+```{r}
+gbm_accuracy_test_color = mean(dat_test_color$emotion_idx == gbm_pred_class_color)
+print(paste0("The accuracy for gbm model is: ", gbm_accuracy_test_color))
+```
+
+### 6.Improved feature with color in SVM
+
+```{r}
+source("../xjx_lib/test_SVM.R")
+load("../output/svm_model_color.RData")
+load("../output/feature_test_color.RData")
+
+svm_result_test_color = svm_test(svm_model_color, dat_test_color)
+svm_pred_class_color = svm_result_test_color[[1]]
+tm.svm.test_color = svm_result_test_color[[2]]
+```
+
+```{r}
+confusionMatrix(factor(svm_pred_class_color), dat_test_color$emotion_idx)
+```
+
+```{r}
+svm_accuracy_test_color = mean(dat_test_color$emotion_idx == svm_pred_class_color)
+print(paste0("The accuracy for svm model is: ", svm_accuracy_test_color))
+```
+
+### 7.Improved feature with color in XGB
+
+```{r}
+source("../xjx_lib/xgb_test.R")
+load("../output/xgb_model_color.RData")
+load("../output/feature_test_color.RData")
+
+xgb_result_test_color = xgb_test(xgb_model_color, dat_test_color[,-ncol(dat_test_color)])
+xgb_pred_color = xgb_result_test_color[[1]]
+tm.xgb.test_color = xgb_result_test_color[[2]]
+xgb_pred_class_color = apply(xgb_pred_color, 1, which.max)-1
+```
+
+```{r}
+confusionMatrix(factor(xgb_pred_class_color), dat_test_color$emotion_idx)
+```
+
+```{r}
+xgb_accuracy_test_color = mean(dat_test_color$emotion_idx == xgb_pred_class_color)
+print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test_color))
+```
+
+### Summarize Accurcy
+
 ```{r}
 my_theme = theme_light() + 
   theme(plot.title = element_text(hjust = 0.5), 
-        plot.subtitle = element_text(hjust = 0.5))
+        plot.subtitle = element_text(hjust = 0.5)) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 0.5, vjust = 0.5)) 
 ```
 
 ```{r}
 if(run.baseline){
-  accuracy_test_baseline = tibble(gbm = gbm_accuracy_test_baseline, svm = svm_accuracy_test_baseline, xgb = xgb_accuracy_test_baseline)
+  accuracy_test = tibble(gbm_baseline = gbm_accuracy_test_baseline, 
+                         gbm_improved = gbm_accuracy_test, 
+                         svm_improved = svm_accuracy_test, 
+                         xgb_improed = xgb_accuracy_test, 
+                         gbm_colored = gbm_accuracy_test_color, 
+                         svm_colored = svm_accuracy_test_color, 
+                         xgb_colored = xgb_accuracy_test_color)
+}else{
+  accuracy_test = tibble(gbm_improved = gbm_accuracy_test, 
+                         svm_improved = svm_accuracy_test, 
+                         xgb_improed  = xgb_accuracy_test, 
+                         gbm_colored = gbm_accuracy_test_color, 
+                         svm_colored = svm_accuracy_test_color, 
+                         xgb_colored = xgb_accuracy_test_color)
 }
-
-accuracy_test = tibble(gbm = gbm_accuracy_test, svm = svm_accuracy_test, xgb = xgb_accuracy_test)
 ```
 
 ```{r}
-if(run.baseline){
-  accuracy_test_baseline %>% pivot_longer(1:3) %>% 
+ accuracy_test %>% pivot_longer(1:ncol(accuracy_test))%>% 
     ggplot(aes(x = name, fill = name)) +
     geom_bar(aes(weight = value)) + 
-    labs(x = 'Classifier', y = 'Accuracy') + 
+    labs(x = 'Classifier', y = 'Accuracy',
+         title = 'The Accuracy of Different Classifier under Different Feature') + 
     my_theme
-}
 ```
-
-
-```{r}
-accuracy_test %>% pivot_longer(1:3) %>% 
-  ggplot(aes(x = name, fill = name)) +
-  geom_bar(aes(weight = value)) + 
-  labs(x = 'Classifier', y = 'Accuracy') + 
-  my_theme
-```
-
 
 ### Summarize Running Time
+
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
+
+#### Train time without feature extraction
 
 ```{r running_time}
 if(run.baseline){
-  tm.train_baseline = tibble(gbm = tm.gbm.train_baseline[3], svm = tm.svm.train_baseline[3], xgb = tm.xgb.train_baseline[3])
-  tm.test_baseline = tibble(gbm = tm.gbm.test_baseline[3], svm = tm.svm.test_baseline[3], xgb = tm.xgb.test_baseline[3])
+  tm.train = tibble(gbm_baseline = tm.gbm.train_baseline[3], 
+                    gbm_improved = tm.gbm.train[3], 
+                    svm_improved = tm.svm.train[3], 
+                    xgb_improved = tm.xgb.train[3], 
+                    gbm_color = tm.gbm.train_color[3], 
+                    svm_color = tm.svm.train_color[3], 
+                    xgb_color = tm.xgb.train_color[3])
+  tm.test= tibble(gbm_baseline = tm.gbm.test_baseline[3], 
+                  gbm_improved = tm.gbm.test[3], 
+                  svm_improved = tm.svm.test[3], 
+                  xgb_improved = tm.xgb.test[3], 
+                  gbm_color = tm.gbm.test_color[3], 
+                  svm_color = tm.svm.test_color[3], 
+                  xgb_color = tm.xgb.test_color[3])
+}else{
+  tm.train = tibble(gbm_improved = tm.gbm.train[3],
+                    svm_improved = tm.svm.train[3], 
+                    xgb_improved = tm.xgb.train[3], 
+                    gbm_color = tm.gbm.train_color[3], 
+                    svm_color = tm.svm.train_color[3],
+                    xgb_color = tm.xgb.train_color[3])
+  tm.test = tibble(gbm_improved = tm.gbm.test[3], 
+                   svm_improved = tm.svm.test[3], 
+                   xgb_improved = tm.xgb.test[3], 
+                   gbm_color = tm.gbm.test_color[3], 
+                   svm_color = tm.svm.test_color[3], 
+                   xgb_color = tm.xgb.test_color[3])
 }
 
-tm.train = tibble(gbm = tm.gbm.train[3], svm = tm.svm.train[3], xgb = tm.xgb.train[3])
-tm.test = tibble(gbm = tm.gbm.test[3], svm = tm.svm.test[3], xgb = tm.xgb.test[3])
+
 ```
 
 ```{r}
-if(run.baseline){
-  tm.train_baseline %>% pivot_longer(1:3) %>% 
-    ggplot(aes(x = name, fill = name)) +
-    geom_bar(aes(weight = value)) + 
-    labs(x = 'Classifier', y = 'Usage Time(s)') + 
-    my_theme
-}
-```
-
-```{r}
-if(run.baseline){
-  tm.test_baseline %>% pivot_longer(1:3) %>% 
-    ggplot(aes(x = name, fill = name)) +
-    geom_bar(aes(weight = value),) + 
-    labs(x = 'Classifier', y = 'Usage time(s)') + 
-    my_theme
-}
-```
-
-```{r}
-tm.train %>% pivot_longer(1:3) %>% 
+tm.train %>% pivot_longer(1:ncol(tm.train)) %>% 
   ggplot(aes(x = name, fill = name)) +
   geom_bar(aes(weight = value)) + 
-  labs(x = 'Classifier', y = 'Usage Time(s)') + 
+  scale_y_log10() + 
+  labs(x = 'Classifier', y = 'Usage Time(s)',
+       title = 'Model Training time') + 
+  my_theme
+
+```
+
+#### Train time with feature extraction
+
+```{r running_time}
+if(run.baseline){
+  tm.train.with = tibble(gbm_baseline = tm.gbm.train_baseline[3]+tm_feature_train_baseline[3],
+                    gbm_improved = tm.gbm.train[3]+tm_feature_train[3],
+                    svm_improved = tm.svm.train[3]+tm_feature_train[3],
+                    xgb_improved = tm.xgb.train[3]+tm_feature_train[3],
+                    gbm_color = tm.gbm.train_color[3]+tm_feature_train_color[3],
+                    svm_color = tm.svm.train_color[3]+tm_feature_train_color[3],
+                    xgb_color = tm.xgb.train_color[3]+tm_feature_train_color[3])
+  tm.test.with= tibble(gbm_baseline = tm.gbm.test_baseline[3]+tm_feature_test_baseline[3], 
+                  gbm_improved = tm.gbm.test[3]+tm_feature_test[3], 
+                  svm_improved = tm.svm.test[3]+tm_feature_test[3], 
+                  xgb_improved = tm.xgb.test[3]+tm_feature_test[3], 
+                  gbm_color = tm.gbm.test_color[3]+tm_feature_test_color[3], 
+                  svm_color = tm.svm.test_color[3]+tm_feature_test_color[3], 
+                  xgb_color = tm.xgb.test_color[3]+tm_feature_test_color[3])
+}else{
+  tm.train.with = tibble(gbm_improved = tm.gbm.train[3]+tm_feature_train[3], 
+                    svm_improved = tm.svm.train[3]+tm_feature_train[3], 
+                    xgb_improved = tm.xgb.train[3]+tm_feature_train[3], 
+                    gbm_color = tm.gbm.train_color[3]+tm_feature_train_color[3], 
+                    svm_color = tm.svm.train_color[3]+tm_feature_train_color[3], 
+                    xgb_color = tm.xgb.train_color[3]+tm_feature_train_color[3])
+  tm.test.with = tibble(gbm_improved = tm.gbm.test[3]+tm_feature_test[3], 
+                   svm_improved = tm.svm.test[3]+tm_feature_test[3], 
+                   xgb_improved = tm.xgb.test[3]+tm_feature_test[3], 
+                   gbm_color = tm.gbm.test_color[3]+tm_feature_test_color[3], 
+                   svm_color = tm.svm.test_color[3]+tm_feature_test_color[3], 
+                   xgb_color = tm.xgb.test_color[3]+tm_feature_test_color[3])
+}
+
+
+```
+
+```{r}
+tm.train.with %>% pivot_longer(1:ncol(tm.train.with)) %>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value)) + 
+  scale_y_log10() + 
+  labs(x = 'Classifier', y = 'Usage Time(s)',
+       title = 'Feature Extraction and Model Training Time') + 
+  my_theme
+
+```
+
+```{r}
+tm.test %>% pivot_longer(1:ncol(tm.test)) %>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value),) + 
+  labs(x = 'Classifier', y = 'Usage time(s)', 
+       title = 'Test Prediction Time') + 
+  scale_y_log10() + 
   my_theme
 ```
 
 ```{r}
-tm.test %>% pivot_longer(1:3) %>% 
+tm.test.with %>% pivot_longer(1:ncol(tm.test.with)) %>% 
   ggplot(aes(x = name, fill = name)) +
   geom_bar(aes(weight = value),) + 
-  labs(x = 'Classifier', y = 'Usage time(s)') + 
+  scale_y_log10() + 
+  labs(x = 'Classifier', y = 'Usage time(s)', 
+       title = 'Feature Extraction and Test Prediction Time') + 
   my_theme
 ```
-
 
 ###Reference
 - Du, S., Tao, Y., & Martinez, A. M. (2014). Compound facial expressions of emotion. Proceedings of the National Academy of Sciences, 111(15), E1454-E1462.

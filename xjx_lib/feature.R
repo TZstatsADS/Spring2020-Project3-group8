@@ -4,7 +4,7 @@
 
 source("../xjx_lib/change_images.R")
 source("../xjx_lib/inv_change_images.R")
-feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", test = all_points){
+feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", test = all_points, colorfeature = FALSE){
 
   get_distance <- function(mat){
     colnames(mat) <- c("x", "y")
@@ -352,17 +352,21 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
     return (t(sapply(test, function(x){get_test(point_ind, x, idx)})))
   }
   
-  idx = map(1:22, ~with(info %>% filter(emotion_idx == .x), Index))
-  importantpts <- c(50, 54)
-  var <- map(importantpts, function(x){get_ptind(x, test[index], idx)})
+  #idx = map(1:22, ~with(info %>% filter(emotion_idx == .x), Index))
+  #importantpts <- c(50, 54)
+  #var <- map(importantpts, function(x){get_ptind(x, test[index], idx)})
   
   dist_feature <- t(sapply(test[index], get_result))
-  used_color <- t(sapply(index, get_used_color, file = image_file))
-  feature_withemo_data <- cbind(dist_feature,
-                                used_color,
-                                #var[[1]], var[[2]], var[[3]], var[[4]], var[[5]], var[[6]], var[[7]], var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]], var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]],
-                                info$emotion_idx[index]
-                                )
+  if(colorfeature){
+    used_color <- t(sapply(index, get_used_color, file = image_file))
+    feature_withemo_data <- cbind(dist_feature, used_color, info$emotion_idx[index])
+  }else{
+    feature_withemo_data <- cbind(dist_feature,
+                                  #var[[1]], var[[2]], var[[3]], var[[4]], var[[5]], var[[6]], var[[7]], var[[8]],var[[9]],var[[10]],var[[11]],var[[12]], var[[13]], var[[14]],var[[15]], var[[16]],var[[17]], var[[18]], var[[19]], var[[20]], var[[21]], var[[22]], var[[23]], var[[24]], var[[25]], var[[26]], var[[27]],
+                                  info$emotion_idx[index]
+                                  )
+  }
+  
   colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
   feature_withemo_data <- as.data.frame(feature_withemo_data)
   feature_withemo_data$emotion_idx <- as.factor(feature_withemo_data$emotion_idx)

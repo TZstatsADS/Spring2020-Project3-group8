@@ -70,6 +70,24 @@ for(i in 1:21){
 }
 ```
 
+```{r}
+a = tibble(true = c(2, 3,4, 4, 6, 6, 6,10,11,11,12,12,13,13,14,16,16,17,17,17,18,19,19,19,19,19,20,21,22,22,22),
+        pred = c(9,12,6,13,11,13,22, 4, 6,12, 6,13, 4,12,15, 3,18, 7,18,20,17, 3,14,20,21,22,21,15,12,20,21))
+name = info$emotion_cat %>% unique()
+```
+
+
+
+```{r}
+k = 1
+i = a[k,1] %>% unlist()
+j = a[k,2] %>% unlist()
+    plot(ave_points[[i]][,1], -ave_points[[i]][,2], xlim = c(100, 900), ylim = c(-730, -130), pch = 16, col = 'blue',cex = 0.5)
+    draw_face(ave_points[[i]], 'blue')
+    points(ave_points[[j]][,1], -ave_points[[j]][,2], pch = 16, col = 'red', cex = 0.5)
+    draw_face(ave_points[[j]], 'red')
+    title(paste0('Blue: ', name[i], ' V.S. Red: ', name[j]))
+```
 
 
 
