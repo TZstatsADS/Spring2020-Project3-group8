@@ -283,6 +283,7 @@ if(run.baseline){
 }
 
 tm_feature_train <- NA
+tm_feature_train_color <- NA
 if(run.feature.train){
   tm_feature_train <- system.time(dat_train <- feature(fiducial_pt_list, train_idx, image_file = "../data/train_set/images/", all_points, colorfeature = FALSE))
   save(dat_train, file="../output/feature_train.RData")
@@ -291,6 +292,7 @@ if(run.feature.train){
 }
 
 tm_feature_test <- NA
+tm_feature_test_color <- NA
 if(run.feature.test){
   tm_feature_test <- system.time(dat_test <- feature(fiducial_pt_list, test_idx, image_file = "../data/train_set/images/", all_points, colorfeature = FALSE))
   save(dat_test, file="../output/feature_test.RData")
