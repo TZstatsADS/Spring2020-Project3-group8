@@ -90,7 +90,7 @@ library(xgboost)
 
 ```{r wkdir, eval=FALSE}
 set.seed(1)
-setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/xjx")
+setwd("~/Documents/GitHub/Spring2020-Project3-group8/xjx")
 # here replace it with your own path or manually set it in RStudio to where this rmd file is located. 
 # use relative path for reproducibility
 ```
@@ -134,7 +134,6 @@ run.feature.test = TRUE # process features for test set
 run.train.gbm = TRUE # run gbm training model
 run.train.svm = TRUE # run svm training model
 run.train.xgb = TRUE # run xgb training model
-
 ```
 
 The cross-validation method takes too much time, and the model we choose does not need it. Although it works well, we did not run it in this document.
@@ -151,6 +150,8 @@ This effect is limited to the tests in this document. The tests in the classroom
 #train-test split
 info <- read.csv(train_label_path)
 n <- length(info$identity %>% unique())
+
+#take 80% of the observations as the train set
 n_train <- round(n*(4/5), 0)
 train_identity = sample(info$identity %>% unique(), n_train, replace = F)
 train_idx <- which(info$identity %in% train_identity)
@@ -178,15 +179,22 @@ if(run.dataprocess.fiducial_pt_list){
 ```
 
 ```{r}
+#function to rotate, translate, zoom the fiducial points to standardize all the points
+#take the middle height of two eyes and the height of nose center to standardize this distance to be 170
+
+#input: indices, train_dir, fiducial_pt_list, single, double
+#output: the fiducial points after all the trasformation
 if(run.dataprocess.all_points){
   
   source("../xjx_lib/change_images.R")
   load("../output/fiducial_pt_list.RData")
   
-  single = c(35,36,37,38,44,52,56,59,62)
+  single = c(35,36,37,38,44,52,56,59,62)  #points without a match, i.e, points on the axis of symmetry
   double = data.frame(
     x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63),
     x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))
+  #points that matches each other on both sides of the face
+  
   indices = 1:2500
   
   tm.run.all_points = system.time(all_points <- change_points(indices, train_dir, fiducial_pt_list, single, double))
@@ -198,6 +206,9 @@ if(run.dataprocess.all_points){
 ```
 
 ```{r}
+#data manipulation to find the average points of each emotion, in order to find more detailed differences of each emotion
+#input: all_points
+#output: ave_points
 if(run.dataprocess.ave_points){
   
   load("../output/all_points.RData")
@@ -224,6 +235,9 @@ if(run.dataprocess.diff_points){
   load("../output/all_points.RData")
   load("../output/ave_points.RData")
   
+  #functions to find the difference on x-aixs and y-axis of each point to corresponding points of the 22 average points of different emotions
+  #input: emo_index, all_points
+  #output: diff
   get_diff <- function(emo_index, train= all_points){
     group <- info %>% filter(emotion_idx == emo_index)
     idx <- group$Index
@@ -237,6 +251,9 @@ if(run.dataprocess.diff_points){
   for (i in 1:22){
     diff_points <- c(diff_points, get_diff(i, all_points))
   }
+  
+  #find the the distance of each point to the corresponding points of the 22 average points of different emotions
+  #output: distance
   distance <- map(diff_points, function(x){x[,1]^2+x[,2]^2})
   distance = map(1:78, function(y) map(distance, ~.x[y]) %>% unlist)
   
@@ -270,6 +287,7 @@ source("../xjx_lib/feature_baseline.R")
 source("../xjx_lib/feature.R")
 load("../output/all_points.RData")
 
+#get the time required for taking the features of train set and test set using the original feature function which is simply taking the distance of each two points
 if(run.baseline){
   tm_feature_train_baseline <- NA
   if(run.feature.train){
@@ -284,6 +302,7 @@ if(run.baseline){
   }
 }
 
+#time required for taking the features of train set using the updated feature function with and without the color feature
 tm_feature_train <- NA
 tm_feature_train_color <- NA
 if(run.feature.train){
@@ -293,6 +312,7 @@ if(run.feature.train){
   save(dat_train_color, file="../output/feature_train_color.RData")
 }
 
+#time required for taking the features of test set using the updated feature function with and without the color feature
 tm_feature_test <- NA
 tm_feature_test_color <- NA
 if(run.feature.test){
@@ -322,6 +342,7 @@ Call the train model and test model from library.
 ### 1.Baseline model with dist feature in GBM
 
 ```{r}
+#using the baseline features to train the gbm model, 
 if(run.baseline){
   load("../output/feature_train_baseline.RData")
   if(run.train.gbm){
