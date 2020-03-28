@@ -1,0 +1,106 @@
+---
+title: "average points"
+author: "Jinxu Xiang"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+info <- read.csv("../data/train_set/label.csv")
+load("../output/all_points.Rdata")
+```
+
+```{r}
+# A function to draw average points of each emotion
+
+emo_idx = map(1:22, ~info$emotion_idx == .x)
+group_points = map(emo_idx, ~all_points[.x])
+ave_points = NULL
+for (i in 1:length(group_points)){
+  mean = matrix(rep(0,78*2), nc = 2)
+  l = length(group_points[[i]])
+  for(j in 1:l){
+    group_points[[i]][[j]]
+    mean = mean + group_points[[i]][[j]]/l
+  }
+  ave_points = c(ave_points, list(mean))
+}
+```
+
+```{r}
+#save(ave_points, file="../output/ave_points.Rdata")
+```
+
+```{r}
+draw_face = function(points, col){
+  g1 = c(2:9,2)
+  g2 = c(11:18,11)
+  g3 = c(19:26,19)
+  g4 = c(27:34,27)
+  g5 = c(39:49,39)
+  g6 = c(50:57,50)
+  g7 = c(58:63,58)
+  g8 = c(64:78)
+  lines(points[g1,1],-points[g1,2], col = col)
+  lines(points[g2,1],-points[g2,2], col = col)
+  lines(points[g3,1],-points[g3,2], col = col)
+  lines(points[g4,1],-points[g4,2], col = col)
+  lines(points[g5,1],-points[g5,2], col = col)
+  lines(points[g6,1],-points[g6,2], col = col)
+  lines(points[g7,1],-points[g7,2], col = col)
+  lines(points[g8,1],-points[g8,2], col = col)
+}
+```
+
+```{r}
+name = info$emotion_cat %>% unique()
+for(i in 1:21){
+  for(j in (i+1):22){
+    plot(ave_points[[i]][,1], -ave_points[[i]][,2], xlim = c(100, 900), ylim = c(-730, -130), pch = 16, col = 'blue',cex = 0.5)
+    draw_face(ave_points[[i]], 'blue')
+    points(ave_points[[j]][,1], -ave_points[[j]][,2], pch = 16, col = 'red', cex = 0.5)
+    draw_face(ave_points[[j]], 'red')
+    title(paste0('Blue: ', name[i], ' V.S. Red: ', name[j]))
+  }
+}
+```
+
+```{r}
+a = tibble(true = c(2, 3,4, 4, 6, 6, 6,10,11,11,12,12,13,13,14,16,16,17,17,17,18,19,19,19,19,19,20,21,22,22,22),
+        pred = c(9,12,6,13,11,13,22, 4, 6,12, 6,13, 4,12,15, 3,18, 7,18,20,17, 3,14,20,21,22,21,15,12,20,21))
+name = info$emotion_cat %>% unique()
+```
+
+
+
+```{r}
+k = 1
+i = a[k,1] %>% unlist()
+j = a[k,2] %>% unlist()
+    plot(ave_points[[i]][,1], -ave_points[[i]][,2], xlim = c(100, 900), ylim = c(-730, -130), pch = 16, col = 'blue',cex = 0.5)
+    draw_face(ave_points[[i]], 'blue')
+    points(ave_points[[j]][,1], -ave_points[[j]][,2], pch = 16, col = 'red', cex = 0.5)
+    draw_face(ave_points[[j]], 'red')
+    title(paste0('Blue: ', name[i], ' V.S. Red: ', name[j]))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

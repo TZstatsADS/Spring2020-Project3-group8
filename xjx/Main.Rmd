@@ -347,7 +347,7 @@ if(run.baseline){
   load("../output/feature_train_baseline.RData")
   if(run.train.gbm){
     source("../xjx_lib/train_gbm.R")
-    gbm_result_train_baseline = gbm_train(dat_train_baseline, 200, 0.8, 0.1, 3)
+    gbm_result_train_baseline = gbm_train(dat_train_baseline, ntrees = 200, bag.fraction = 0.8, shrinkage = 0.1, cv.folds = 3)
     gbm_model_baseline = gbm_result_train_baseline[[1]]
     tm.gbm.train_baseline = gbm_result_train_baseline[[2]]
     save(gbm_model_baseline, file="../output/gbm_model_baseline.RData")
@@ -362,7 +362,7 @@ if(run.train.gbm){
   source("../xjx_lib/train_gbm.R")
   load("../output/feature_train.RData")
   
-  gbm_result_train = gbm_train(dat_train, 200, 0.8, 0.1, 3)
+  gbm_result_train = gbm_train(dat_train, ntrees = 200, bag.fraction = 0.8, shrinkage = 0.1, cv.folds = 3)
   gbm_model = gbm_result_train[[1]]
   tm.gbm.train = gbm_result_train[[2]]
   save(gbm_model, file="../output/gbm_model.RData")
@@ -434,7 +434,7 @@ if(run.train.gbm){
   source("../xjx_lib/train_gbm.R")
   load("../output/feature_train_color.RData")
   
-  gbm_result_train_color = gbm_train(dat_train_color, 200, 0.8, 0.1, 3)
+  gbm_result_train_color = gbm_train(dat_train_color, ntrees = 200, bag.fraction = 0.8, shrinkage = 0.1, cv.folds = 3)
   gbm_model_color = gbm_result_train_color[[1]]
   tm.gbm.train_color = gbm_result_train_color[[2]]
   save(gbm_model_color, file="../output/gbm_model_color.RData")

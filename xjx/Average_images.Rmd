@@ -1,0 +1,64 @@
+---
+title: "Average Images"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r , include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(EBImage)
+source("../xjx_lib/change_images.R")
+info <- read.csv("../data/train_set/label.csv")
+```
+
+```{r, include=FALSE}
+img = change_image(1)[[1]][[2]]
+display(img, method = 'raster')
+```
+
+```{r , include=FALSE}
+img1 = img
+img1 = 1-(1-img1)/20
+display(img1, method = 'raster')
+```
+
+```{r , include=FALSE}
+# A function to draw and save average face of each emotion
+draw_ave = function(indices, char)
+{
+  l = length(indices)
+  ave_img = change_image(1)[[1]][[2]][60:940, 60:720, ] * 0
+  for(i in 1:l){
+    img = change_image(indices[i])[[1]][[2]][60:940, 60:720, ]
+    ave_img = ave_img + (1-img)/l
+  }
+  ave_img = 1-ave_img
+  display(ave_img, method = 'raster')
+  text(x = 150, y = 50, label = char, cex = 2.5, col = 'blue')
+  filename = paste0("../figs/ave_", char, ".jpeg")
+  dev.print(jpeg, filename = filename, width = dim(ave_img)[1], height = dim(ave_img)[2])
+  return(ave_img)
+}
+```
+
+```{r}
+s = Sys.time()
+map(1:22, ~draw_ave(info$Index[info$emotion_idx==.x], with(info, emotion_cat %>% unique)[.x]))
+e = Sys.time()
+```
+
+```{r}
+e-s
+```
+
+
+
+
+
+
+
+

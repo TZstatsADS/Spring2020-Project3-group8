@@ -41,7 +41,10 @@ move_images = function(points, img, center_x = 500, center_y = 375, fixdist = -1
   pos=rbind(pos_single,pos_double)
   
   angle = cal_angle(pos)
-  points_rotation = cal_rotation(points, angle)
+  if(angle > 0)
+    points_rotation = cal_rotation(points, angle, move_x = 750*sin(angle), move_y = 0)
+  else
+    points_rotation = cal_rotation(points, angle, move_x = 0, move_y = 1000*sin(-angle))
   
   my_fixdist = cal_fixdist(points_rotation)
   rate = fixdist/my_fixdist
@@ -82,7 +85,10 @@ move_points = function(points, center_x = 500, center_y = 375, fixdist = -170, s
   pos=rbind(pos_single,pos_double)
   
   angle = cal_angle(pos)
-  points_rotation = cal_rotation(points, angle)
+  if(angle > 0)
+    points_rotation = cal_rotation(points, angle, move_x = 750*sin(angle), move_y = 0)
+  else
+    points_rotation = cal_rotation(points, angle, move_x = 0, move_y = 1000*sin(-angle))
   
   my_fixdist = cal_fixdist(points_rotation)
   rate = fixdist/my_fixdist

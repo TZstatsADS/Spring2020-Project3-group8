@@ -12,7 +12,7 @@ library(EBImage)
 ```
 
 ```{r}
-indices = 1147
+indices = 920
 image.path_sub <- paste0(train_image_dir, sprintf("%04d", indices), ".jpg")
 image.list_sub = list(EBImage::readImage(image.path_sub))
 img = Image(image.list_sub[[1]], colormode = 'Color')
@@ -47,7 +47,6 @@ for(i in 1:nrow(double)){
 ```{r}
 display(img, method="raster")
 points(pos$x, pos$y, col = 'red')
-points(c(10,10,990,990),c(10,740,10,740), col = c('green','blue','white','orange'), cex = 10)
 ```
 
 ```{r}
@@ -57,13 +56,13 @@ summary(model)
 ```
 
 ```{r}
-x0 = (model$coefficients[1]*10):((750*model$coefficients[2]+model$coefficients[1])*10)/10
-yhat = -model$coefficients[1]/model$coefficients[2] + x0/model$coefficients[2]
+y0 = 0:100*10
+xhat = model$coefficients[1] + model$coefficients[2]*y0
 ```
 
 ```{r}
 display(img, method="raster")
-points(x0, yhat, col = 'red')
+points(xhat, y0, col = 'red')
 points(pos$x, pos$y, col = 'blue')
 ```
 
@@ -73,23 +72,43 @@ b = 1000
 angle = atan(model$coefficients[2])
 img_rotate = rotate(img, angle/2/pi*360)
 display(img_rotate, method="raster")
-points(c(a*sin(angle), 0, a*sin(angle)+b*cos(angle), b*cos(angle)),
+if(angle > 0){
+  points(c(a*sin(angle), 0, a*sin(angle)+b*cos(angle), b*cos(angle)),
        c(0, a*cos(angle), b*sin(angle), a*cos(angle)+b*sin(angle)), 
        col = c('green','blue','white','orange'), cex = 10)
+}else{
+  points(c(0, a*sin(-angle), b*cos(angle), b*cos(angle)+a*sin(-angle)),
+       c(b*sin(-angle), a*cos(-angle)+b*sin(-angle), 0, a*cos(angle)), 
+       col = c('green','blue','white','orange'), cex = 10)
+}
+
 ```
 
 ```{r}
-# Rotation point (0, 750)
-new_points = data.frame(x = NULL, y = NULL)
-for(i in 1:78){
-  x = points[i,1] - 0
-  y = points[i,2] - 0
-  alpha = atan(y/x)
-  d = sqrt(x^2+y^2)
-  newx = d*cos(alpha + angle) + 0 + 750*sin(angle)
-  newy = d*sin(alpha + angle) + 0
-  
-  new_points = rbind(new_points, data.frame(x = newx, y = newy))
+if(angle > 0){
+  new_points = data.frame(x = NULL, y = NULL)
+  for(i in 1:78){
+    x = points[i,1] - 0
+    y = points[i,2] - 0
+    alpha = atan(y/x)
+    d = sqrt(x^2+y^2)
+    newx = d*cos(alpha + angle) + 0 + 750*sin(angle)
+    newy = d*sin(alpha + angle) + 0 
+    
+    new_points = rbind(new_points, data.frame(x = newx, y = newy))
+  }
+}else{
+  new_points = data.frame(x = NULL, y = NULL)
+  for(i in 1:78){
+    x = points[i,1] - 0
+    y = points[i,2] - 0
+    alpha = atan(y/x)
+    d = sqrt(x^2+y^2)
+    newx = d*cos(alpha + angle) + 0
+    newy = d*sin(alpha + angle) + 0 + 1000 * sin(-angle)
+    
+    new_points = rbind(new_points, data.frame(x = newx, y = newy))
+  }
 }
 ```
 
@@ -122,47 +141,66 @@ summary(new_model)
 ```
 
 ```{r}
-new_x0 = (new_model$coefficients[1]*100):((750*new_model$coefficients[2]+new_model$coefficients[1])*100)/100
-new_yhat = -new_model$coefficients[1]/new_model$coefficients[2] + new_x0/new_model$coefficients[2]
+new_y0 = 0:100*10
+new_xhat = new_model$coefficients[1] + new_model$coefficients[2]*new_y0
 ```
 
 ```{r}
-# No regression line because coeff of y is toooooooo small, good rotation!
 display(img_rotate, method="raster")
-points(new_x0, new_yhat, col = 'red')
+points(new_xhat, new_y0, col = 'red')
 points(new_pos$x, new_pos$y, col = 'blue')
-points(1:20*20, rep(100,20),col = 'green')
-points(rep(100,20), 1:20*20,col = 'green')
 ```
 
 ```{r}
-img_translate = translate(img_rotate, c(500-new_points[37,1], 375-new_points[37,2]))
+fixdist = -170
+my_fixdist = apply(new_points[c(1,10),],2,mean)[2] - new_points[44,][2]
+rate = fixdist/my_fixdist
+new2_points = new_points*unlist(rate)
+```
+
+```{r}
+img_zoom = resize(img_rotate, nrow(img_rotate)*unlist(rate))
+display(img_zoom, method="raster")
+new_add_point2 <- function(n){text(x = new2_points[n,1],
+                              y = new2_points[n,2],
+                              label = as.character(n), col = "white", cex = 0.8)}
+lapply(1:78,new_add_point2)
+```
+
+
+
+```{r}
+img_translate = translate(img_zoom, c(500-new2_points[37,1], 375-new2_points[37,2]))
 display(img_translate, method="raster")
-points(500,375,col = 'red', cex = 1, pch = 16)
+points(500, 375, col = 'red', cex = 1, pch = 16)
 ```
 
 ```{r}
-new2_points = data.frame(x = NULL, y = NULL)
+new3_points = data.frame(x = NULL, y = NULL)
 for(i in 1:78){
-  new2x = new_points[i,1] + (500-new_points[37,1])
-  new2y = new_points[i,2] + (375-new_points[37,2])
-  new2_points = rbind(new2_points, data.frame(x = new2x, y = new2y))
+  new3x = new2_points[i,1] + (500-new2_points[37,1])
+  new3y = new2_points[i,2] + (375-new2_points[37,2])
+  new3_points = rbind(new3_points, data.frame(x = new3x, y = new3y))
 }
 ```
 
 ```{r}
 display(img_translate, method="raster")
-new2_add_point <- function(n){text(x = new2_points[n,1],
-                              y = new2_points[n,2],
+new3_add_point <- function(n){text(x = new3_points[n,1],
+                              y = new3_points[n,2],
                               label = as.character(n), col = "white", cex = 0.8)}
-lapply(1:78,new2_add_point)
+lapply(1:78,new3_add_point)
 
 ```
 
 ```{r}
-display(img_translate, method="raster")
-points(new2_points$x,new2_points$y, col = 'blue', cex = 0.1, pch = 16)
-points(500,375,col = 'red', cex = 1, pch = 16)
+img_final = img_translate[60:940, 60:720, ]
+```
+
+```{r}
+display(img_final, method="raster")
+points(new3_points$x-60, new3_points$y-60, col = 'blue', cex = 0.8, pch = 16)
+points(500-60, 375-60, col = 'red', cex = 2, pch = 16)
 ```
 
 
