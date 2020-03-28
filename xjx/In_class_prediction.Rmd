@@ -7,8 +7,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-
 ```{r message=FALSE}
 if(!require("EBImage")){
   source("https://bioconductor.org/biocLite.R")
@@ -187,11 +185,11 @@ svm_pred_class_inclass = svm_result_test_inclass[[1]]
 tm.svm.test_inclass = svm_result_test_inclass[[2]]
 ```
 
+## Step 5: Conclusion
+
 ```{r}
 confusionMatrix(factor(svm_pred_class_inclass), dat_inclass$emotion_idx)
 ```
-
-## Step 5: Conclusion
 
 ```{r}
 svm_accuracy_test_inclass = mean(dat_inclass$emotion_idx == svm_pred_class_inclass)
