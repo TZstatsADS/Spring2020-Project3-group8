@@ -72,7 +72,7 @@ run.build = TRUE
 ```{r wkdir, eval=FALSE}
 if(run.build){
   set.seed(1)
-  setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/xjx")
+  setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
   
   train_dir <- "../data/train_set/" # This will be modified for different data sets.
   train_image_dir <- paste(train_dir, "images/", sep="")
