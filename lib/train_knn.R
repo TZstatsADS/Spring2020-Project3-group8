@@ -1,6 +1,7 @@
 ###########################################################
 ### Train a classification model with training features ###
 ###########################################################
+
 train <- function(feature_df = pairwise_data, par = NULL){
   ### Train a classfication model using processed features from training images
   
