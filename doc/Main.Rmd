@@ -277,20 +277,15 @@ load("../output/distance.Rdata")
 
 ## Step 3: construct features and responses
 
-+ The follow plots show how pairwise distance between fiducial points can work as feature for facial emotion recognition.
++ feature_baseline: function that represent the original features given by the distance of 78 points between each other 
 
-  + In the first column, 78 fiducials points of each emotion are marked in order. 
-  + In the second column distributions of vertical distance between right pupil(1) and  right brow peak(21) are shown in  histograms. For example, the distance of an angry face tends to be shorter than that of a surprised face.
-  + The third column is the distributions of vertical distances between right mouth corner(50)
-and the midpoint of the upper lip(52).  For example, the distance of an happy face tends to be shorter than that of a sad face.
++ feature: function that takes the updated feature that were selected by ourselves
+  + feature function has a boolean input which indicate if we want to take color features or not
+  + color feature includes the darker folds color on the face
+  + with the color feature, the running time will be longer but the predicting accuracy will increase
+  + without the color feature, the running time will be shorter but the predicting acuuracy will decrease
 
-![Figure1](../figs/feature_visualization.jpg)
-
-`feature.R` should be the wrapper for all your feature engineering functions and options. The function `feature( )` should have options that correspond to different scenarios for your project and produces an R object that contains features and responses that are required by all the models you are going to evaluate later. 
-  
-  + `feature.R`
-  + Input: list of images or fiducial point
-  + Output: an RData file that contains extracted features and corresponding responses
++ we also saved the features into the output folder
 
 ```{r}
 source("../lib/feature_baseline.R")
@@ -335,19 +330,8 @@ if(run.feature.test){
 ```
 
 ## Step 4: Train a classification model with training features and responses
-Call the train model and test model from library. 
 
-`train.R` and `test.R` should be wrappers for all your model training steps and your classification/prediction steps. 
-
-+ `train.R`
-  + Input: a data frame containing features and labels and a parameter list.
-  + Output:a trained model
-+ `test.R`
-  + Input: the fitted classification model using training data and processed features from testing images 
-  + Input: an R object that contains a trained classifier.
-  + Output: training model specification
-
-+ In this Starter Code, we use KNN to do classification. 
+In this step, we will construct the train model using GBM, SVM, and XGB, respectively using baseline features, improved features and improved features with color features to get the training model, then saved these model to the output folder.
 
 ### 1.Baseline model with dist feature in GBM
 
@@ -522,6 +506,8 @@ if(run.train.xgb){
 
 
 ## Step 5: Run test on test images
+
+For each model we constructed, we use that model on the test set and give a confusion matrix and predicting accuracy repectively. 
 
 ### 1.Baseline model with dist feature in GBM
 
