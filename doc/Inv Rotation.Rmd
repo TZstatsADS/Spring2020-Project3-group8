@@ -7,10 +7,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+A test on inv-change_image function
+
 ```{r}
 library(EBImage)
 library(tidyverse)
-source("../xjx_lib/change_images.R")
+source("../lib/change_images.R")
 info <- read.csv("../data/train_set/label.csv")
 load("../output/all_points.Rdata")
 load("../output/fiducial_pt_list.RData")
@@ -75,7 +77,7 @@ sum(a-points)
 ```
 
 ```{r}
-source("../xjx_lib/inv_change_images.R")
+source("../lib/inv_change_images.R")
 sum(inv_change_points(points, endpoints) - points)
 ```
 

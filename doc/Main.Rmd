@@ -1,6 +1,6 @@
 ---
 title: "Main"
-author: "Chengliang Tang, Yujie Wang, Tian Zheng"
+author: "Jiancong Shen, Vikki Sui, Jinxu Xiang, Ruiqi Xie, Wenjie Xie"
 output:
   html_document:
     df_print: paged
@@ -8,15 +8,19 @@ output:
 
 ## Abstract
 
-Computer configuration
+This document mainly describes an improved way of expression recognition algorithm. This method reduces the calculation time and improves the classification accuracy by pre-transforming data, extracting efficient features (base on points and images). The goal is to select the best model by comparing the classification results of different classifiers under different features.
+
+###  Computer configuration
+
 System: Microsoft Windows 10 x64
+
 CPU: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz(3600 MHz)
+
 GPU: NVIDIA GeForce RTX 2070 SUPER (8192 MB)
+
 RAM: 16.00 GB (2400 MHz)
 
-Based on the fact that the total training time is the sum of model training time, the feature extraction time, and the data processing time, we have the formula below:
-
-all training time = model training time + feature extraction time + data preprocessing time
+### Final result
 
 |       | test accuracy | model training time | all training time | test prediction time | all prediction time | 
 | ------ | ------ | ------ | ------ | ------ | ------ | 
@@ -28,9 +32,15 @@ all training time = model training time + feature extraction time + data preproc
 | xgb_improved | 52.9% | 45.2s | 67.2s | 0.06s | 5.95s |
 | xgb_colored | 55.4% | 31.7s | 175s | 0.06s | 38.6s |
 
+Based on the fact that the total training time is the sum of model training time, the feature extraction time, and the data processing time, we have the formula below:
+
+all training time = data preprocessing time + feature extraction time + model training time
+
 The accuracy and time shown in the table above are from a certain measurement and may not exactly match the results shown in the PDF document.
 
-We extract color features and use the svm classifier as our improved model. Since there is no other results affect our judgment of in-class tests. We predict the final accuracy of in-class test to be 58%
+The improved feature contains 129 data extracted from 78 points' position. The color feature contains all improved feature and and 10 other feature which extracts from points and images. The dimension of color feature is 139.
+
+We extract color feature and use the svm classifier as our improved model. Since there is no other results affect our judgment of in-class tests. We predict the final accuracy of in-class test to be 58%.
 
 ```{r message=FALSE}
 if(!require("EBImage")){
@@ -90,14 +100,14 @@ library(xgboost)
 
 ## Step 0 set work directories
 
-```{r wkdir, eval=FALSE}
+```{r , eval=FALSE}
 set.seed(1)
 setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
 # here replace it with your own path or manually set it in RStudio to where this rmd file is located. 
 # use relative path for reproducibility
 ```
 
-Provide directories for training images. Training images and Training fiducial points will be in different subfolders. 
+Provide directories for training images. Training images and training fiducial points will be in different subfolders. 
 
 ```{r}
 train_dir <- "../data/train_set/" # This will be modified for different data sets.
@@ -115,12 +125,10 @@ In this chunk, we have a set of controls for the evaluation experiments.
 + (T/F) process for data set
 + (T/F) cross-validation on the training set
 + (number) K, the number of CV folds
-+ (T/F) process features for training set
-+ (T/F) run evaluation on an independent test set
-+ (T/F) process features for test set
++ (T/F) process features for training and test set
 + (T/F) process model of training data
 
-```{r exp_setup}
+```{r}
 run.baseline = TRUE # run baseline feature, slow!
 
 run.dataprocess.fiducial_pt_list = FALSE # save fiducial_pt_list
@@ -163,7 +171,7 @@ train_idx <- sample(train_idx, length(train_idx), replace = F)
 
 Fiducial points are stored in matlab format. In this step, we read them and store them in a list.
 
-```{r read fiducial points}
+```{r}
 #function to read fiducial points
 #input: index
 #output: matrix of fiducial points corresponding to the index
@@ -284,7 +292,7 @@ and the midpoint of the upper lip(52).  For example, the distance of an happy fa
   + Input: list of images or fiducial point
   + Output: an RData file that contains extracted features and corresponding responses
 
-```{r feature}
+```{r}
 source("../lib/feature_baseline.R")
 source("../lib/feature.R")
 load("../output/all_points.RData")
@@ -734,7 +742,7 @@ if(run.baseline){
 
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
 
-```{r running_time}
+```{r}
 #get a tibble of the running time, tm.train for the training and tm.test for the test
 if(run.baseline){
   tm.train = tibble(gbm_baseline = tm.gbm.train_baseline[3], 
@@ -769,7 +777,7 @@ if(run.baseline){
 
 ```
 
-```{r running_time}
+```{r}
 #get a tibble of the total running time which used the formula at the begining of the report
 #for training, total running time is the sum of data manipulation, extraction of features, and trainig
 #for test, the total running time is the sum of data manipulation, extraction of feature, and testing
