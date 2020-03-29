@@ -26,7 +26,7 @@ Term: Spring 2020
 | xgb_improved | 52.9% | 45.2s | 67.2s | 0.06s | 5.95s |
 | xgb_colored | 55.4% | 31.7s | 175s | 0.06s | 38.6s |
 
-<\br>
+  
 
 + Project summary: In this project, we created a classification engine for facial emotion recognition. We first did the data cleaning process. By zooming, rotating and choosing the poinnts, we put all the faces in the images horizontal. Then we did feature choosing.
 We mainly chose the distance feature, angle feature, color feature to improve the accuracy. Finally we used GBM as baseline, improved it and used SVM and XGB model to predict facial emotion. 
