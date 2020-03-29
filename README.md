@@ -8,11 +8,11 @@ Term: Spring 2020
 
 + Team ##
 + Team members
-	+ team member 1
-	+ team member 2
-	+ team member 3
-	+ team member 4
-	+ team member 5
+	+ Jiancong Shen
+	+ Vikki Sui
+	+ Jinxu Xiang
+	+ Ruiqi Xie
+	+ Wenjie Xie
 
 + Project summary: In this project, we created a classification engine for facial emotion recognition. 
 	
