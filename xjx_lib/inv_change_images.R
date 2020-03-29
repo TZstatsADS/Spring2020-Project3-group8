@@ -2,6 +2,7 @@ single = c(35,36,37,38,44,52,56,59,62)
 double = data.frame(x1 = c(1,2,3,4,5,6,7,8,9,19,20,21,22,23,24,25,26,39,40,41,42,43,50,51,57,58,63),
                     x2 = c(10,15,14,13,12,11,18,17,16,31,30,29,28,27,34,33,32,49,48,47,46,45,54,53,55,60,61))
 
+# This is the inverse function of change_points
 inv_change_points = function(points, endpoints, center_x = 500, center_y = 375, fixdist = -170){
   pos_single = data.frame(x = points[single,1], y = points[single,2])
   pos_double=data.frame(x = 0.5*points[double[,1],1]+0.5*points[double[,2],1],
