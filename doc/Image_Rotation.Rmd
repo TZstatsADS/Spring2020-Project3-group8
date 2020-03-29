@@ -17,7 +17,7 @@ Take one photo as an example to explain the process of data preprocessing.
 
 ```{r}
 indices = 920
-setwd("~/Documents/GitHub/Spring2020-Project3-group8/xjx")
+setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
 train_dir <- "../data/train_set/"
 train_image_dir <- paste(train_dir, "images/", sep="")
 train_pt_dir <- paste(train_dir,  "points/", sep="")
