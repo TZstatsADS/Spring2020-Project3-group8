@@ -14,7 +14,7 @@ Term: Spring 2020
 	+ Ruiqi Xie
 	+ Wenjie Xie
 
-### Final result
++ Final result
 
 |       | test accuracy | model training time | all training time | test prediction time | all prediction time | 
 | ------ | ------ | ------ | ------ | ------ | ------ | 
