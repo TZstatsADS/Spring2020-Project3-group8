@@ -16,7 +16,7 @@ Take one photo as an example to explain the process of data preprocessing.
 ### Step 0: Plot original photo with points
 
 ```{r}
-indices = 920
+indices = 113
 setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
 train_dir <- "../data/train_set/"
 train_image_dir <- paste(train_dir, "images/", sep="")
@@ -34,11 +34,15 @@ load("../output/fiducial_pt_list.RData")
 fiducial_pt_list_sub <- fiducial_pt_list[indices]
 add_point <- function(n){text(x = fiducial_pt_list_sub[[1]][n,1],
                               y = fiducial_pt_list_sub[[1]][n,2],
-                              label = as.character(n), col = "white", cex = 0.8)}
+                              label = as.character(n), col = "white", cex = 1.4)}
 #lapply(1:78,add_point)
 for(i in 1:78){
   add_point(i)
 }
+lines(c(100,300,300,100,100), c(100,100,300,300,100), col = 'Green', lwd = 4)
+
+filename = paste0("../figs/step1_", indices, ".jpeg")
+dev.print(jpeg, filename = filename, width = dim(img)[1], height = dim(img)[2])
 ```
 
 ### Step 1: Determine symmetry axis and rotate photo
@@ -76,8 +80,12 @@ xhat = model$coefficients[1] + model$coefficients[2]*y0
 
 ```{r}
 display(img, method="raster")
-points(xhat, y0, col = 'red')
-points(pos$x, pos$y, col = 'blue')
+points(xhat, y0, col = 'red', cex = 2.5, pch = 16)
+points(pos$x, pos$y, col = 'blue', cex = 2.5, pch = 16)
+lines(c(100,300,300,100,100), c(100,100,300,300,100), col = 'Green', lwd = 4)
+
+filename = paste0("../figs/step2_", indices, ".jpeg")
+dev.print(jpeg, filename = filename, width = dim(img)[1], height = dim(img)[2])
 ```
 
 ```{r}
@@ -130,11 +138,15 @@ if(angle > 0){
 display(img_rotate, method="raster")
 new_add_point <- function(n){text(x = new_points[n,1],
                               y = new_points[n,2],
-                              label = as.character(n), col = "white", cex = 0.8)}
+                              label = as.character(n), col = "white", cex = 1.4)}
 #lapply(1:78,new_add_point)
 for(i in 1:78){
   new_add_point(i)
 }
+lines(c(100,300,300,100,100), c(100,100,300,300,100), col = 'Green', lwd = 4)
+
+filename = paste0("../figs/step3_", indices, ".jpeg")
+dev.print(jpeg, filename = filename, width = dim(img_rotate)[1], height = dim(img_rotate)[2])
 ```
 
 ```{r}
@@ -182,11 +194,16 @@ img_zoom = resize(img_rotate, nrow(img_rotate)*unlist(rate))
 display(img_zoom, method="raster")
 new_add_point2 <- function(n){text(x = new2_points[n,1],
                               y = new2_points[n,2],
-                              label = as.character(n), col = "white", cex = 0.8)}
+                              label = as.character(n), col = "white", cex = 1.4)}
 #lapply(1:78,new_add_point2)
 for(i in 1:78){
   new_add_point2(i)
 }
+
+lines(c(100,300,300,100,100), c(100,100,300,300,100), col = 'Green', lwd = 4)
+
+filename = paste0("../figs/step4_", indices, ".jpeg")
+dev.print(jpeg, filename = filename, width = dim(img_zoom)[1], height = dim(img_zoom)[2])
 ```
 
 ### Step 3: Determine translation distance and translation
@@ -210,11 +227,16 @@ for(i in 1:78){
 display(img_translate, method="raster")
 new3_add_point <- function(n){text(x = new3_points[n,1],
                               y = new3_points[n,2],
-                              label = as.character(n), col = "white", cex = 0.8)}
+                              label = as.character(n), col = "white", cex = 1.4)}
 #lapply(1:78,new3_add_point)
 for(i in 1:78){
   new3_add_point(i)
 }
+
+lines(c(100,300,300,100,100), c(100,100,300,300,100), col = 'Green', lwd = 4)
+
+filename = paste0("../figs/step5_", indices, ".jpeg")
+dev.print(jpeg, filename = filename, width = dim(img_translate)[1], height = dim(img_translate)[2])
 ```
 
 ```{r}
@@ -223,8 +245,11 @@ img_final = img_translate[60:940, 60:720, ]
 
 ```{r}
 display(img_final, method="raster")
-points(new3_points$x-60, new3_points$y-60, col = 'blue', cex = 0.8, pch = 16)
-points(500-60, 375-60, col = 'red', cex = 2, pch = 16)
+points(new3_points$x-60, new3_points$y-60, col = 'blue', cex = 2, pch = 16)
+points(500-60, 375-60, col = 'red', cex = 4, pch = 16)
+
+filename = paste0("../figs/step6_", indices, ".jpeg")
+dev.print(jpeg, filename = filename, width = 881, height = 661)
 ```
 
 

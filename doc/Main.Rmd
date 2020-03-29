@@ -24,17 +24,19 @@ RAM: 16.00 GB (2400 MHz)
 
 |       | test accuracy | model training time | all training time | test prediction time | all prediction time | 
 | ------ | ------ | ------ | ------ | ------ | ------ | 
-| gbm_baseline | 45.6% | 1960s | 1961s | 13.3s | 13.4s |
-| gbm_improved | 46.2% | 42.9s | 67.2s | 0.03s | 5.92s | 
-| gbm_colored | 48.1% | 45.2s | 188s | 0.04s | 68.6s |
+| gbm_baseline | 44.7% | 1960s | 1961s | 13.3s | 13.4s |
+| gbm_improved | 47.7% | 42.9s | 67.2s | 0.03s | 5.92s | 
+| gbm_colored | 48.8% | 45.2s | 188s | 0.04s | 68.6s |
 | svm_improved | 57.1% | 2.39s | 26.7s | 0.20s | 6.09s |
 | svm_colored | 60.5% | 2.38s | 146s | 0.20s | 38.8s |
 | xgb_improved | 52.9% | 45.2s | 67.2s | 0.06s | 5.95s |
-| xgb_colored | 55.4% | 31.7s | 175s | 0.06s | 38.6s |
+| xgb_colored | 56.3% | 31.7s | 175s | 0.06s | 38.6s |
 
 Based on the fact that the total training time is the sum of model training time, the feature extraction time, and the data processing time, we have the formula below:
 
-all training time = data preprocessing time + feature extraction time + model training time
+All training time = Data preprocessing time + Feature extraction time + Model training time
+
+All test time = Data preprocessing time + Feature extraction time + Test prediction time
 
 The accuracy and time shown in the table above are from a certain measurement and may not exactly match the results shown in the PDF document.
 
@@ -138,8 +140,8 @@ run.dataprocess.diff_points = FALSE # save diff, distance of each point to its m
 
 run.cv = FALSE # run cross-validation on the training set
 K = 5  # number of CV folds
-run.feature.train = TRUE # process features for training set
-run.feature.test = TRUE # process features for test set
+run.feature.train = FALSE # process features for training set
+run.feature.test = FALSE # process features for test set
 
 run.train.gbm = TRUE # run gbm training model
 run.train.svm = TRUE # run svm training model
@@ -527,7 +529,7 @@ if(run.baseline){
 
 ```{r}
 #get the confusion matrix of the prediction
-confusionMatrix(factor(gbm_pred_class_baseline), dat_test$emotion_idx)
+confusionMatrix(factor(gbm_pred_class_baseline), dat_test_baseline$emotion_idx)
 ```
 
 ```{r}
@@ -716,12 +718,14 @@ if(run.baseline){
 ```
 
 ```{r}
- accuracy_test %>% pivot_longer(1:ncol(accuracy_test))%>% 
-    ggplot(aes(x = name, fill = name)) +
-    geom_bar(aes(weight = value)) + 
-    labs(x = 'Classifier', y = 'Accuracy',
-         title = 'The Accuracy of Different Classifier under Different Feature') + 
-    my_theme
+g_accuracy_test = accuracy_test %>% pivot_longer(1:ncol(accuracy_test))%>% 
+  ggplot(aes(x = name, fill = name)) +
+  geom_bar(aes(weight = value)) + 
+  labs(x = 'Classifier', y = 'Accuracy',
+       title = 'The Accuracy of Different Classifier under Different Feature') + 
+  my_theme
+ggsave("../figs/g_accuracy_test.jpg", plot = g_accuracy_test)
+g_accuracy_test
 ```
 
 ### Summarize Running Time
@@ -804,54 +808,60 @@ if(run.baseline){
 
 ```{r}
 #plot the train time without feature extraction
-tm.train %>% pivot_longer(1:ncol(tm.train)) %>% 
+g_time_train = tm.train %>% pivot_longer(1:ncol(tm.train)) %>% 
   ggplot(aes(x = name, fill = name)) +
   geom_bar(aes(weight = value)) + 
   scale_y_log10() + 
   labs(x = 'Classifier', y = 'Usage Time(s)',
        title = 'Model Training time') + 
   my_theme
-
+ggsave("../figs/g_time_train.jpg", plot = g_time_train)
+g_time_train
 ```
 
 #### Train time with feature extraction
 
 ```{r}
 #plot the train time with feature extraction
-tm.train.with %>% pivot_longer(1:ncol(tm.train.with)) %>% 
+g_time_train_with = tm.train.with %>% pivot_longer(1:ncol(tm.train.with)) %>% 
   ggplot(aes(x = name, fill = name)) +
   geom_bar(aes(weight = value)) + 
   scale_y_log10() + 
   labs(x = 'Classifier', y = 'Usage Time(s)',
        title = 'Feature Extraction and Model Training Time') + 
   my_theme
-
+ggsave("../figs/g_time_train_with.jpg", plot = g_time_train_with)
+g_time_train_with
 ```
 
 #### Test time without feature extraction
 
 ```{r}
 #plot the test time without feature extraction
-tm.test %>% pivot_longer(1:ncol(tm.test)) %>% 
+g_time_test = tm.test %>% pivot_longer(1:ncol(tm.test)) %>% 
   ggplot(aes(x = name, fill = name)) +
   geom_bar(aes(weight = value),) + 
   labs(x = 'Classifier', y = 'Usage time(s)', 
        title = 'Test Prediction Time') + 
   scale_y_log10() + 
   my_theme
+ggsave("../figs/g_time_test.jpg", plot = g_time_test)
+g_time_test
 ```
 
 #### Test time with feature extraction
 
 ```{r}
 #plot the test time with feature extraction
-tm.test.with %>% pivot_longer(1:ncol(tm.test.with)) %>% 
+g_time_test_with = tm.test.with %>% pivot_longer(1:ncol(tm.test.with)) %>% 
   ggplot(aes(x = name, fill = name)) +
   geom_bar(aes(weight = value),) + 
   scale_y_log10() + 
   labs(x = 'Classifier', y = 'Usage time(s)', 
        title = 'Feature Extraction and Test Prediction Time') + 
   my_theme
+ggsave("../figs/g_time_test_with.jpg", plot = g_time_test_with)
+g_time_test_with
 ```
 
 ## Reference
