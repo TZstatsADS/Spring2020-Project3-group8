@@ -41,7 +41,7 @@ Term: Spring 2020
 + Vikki Sui:
 + Jinxu Xiang:
 + Ruiqi Xie:
-+ Wenjie Xie:
++ Wenjie Xie: Extract detailed features by comparing differences between 220 facial expression category pairs
 
 Following [suggestions](http://nicercode.github.io/blog/2013-04-05-projects/) by [RICH FITZJOHN](http://nicercode.github.io/about/#Team) (@richfitz). This folder is orgarnized as follows.
 
