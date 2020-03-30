@@ -9,9 +9,9 @@ xgb_test = function(model, dat_test) {
     pred <- predict(
       model, 
       newdata = test_mat_dat, 
-      missing=NA, 
+      missing = NA, 
       n.trees = 500, 
-      reshape=T
+      reshape = TRUE
     )
   )
   

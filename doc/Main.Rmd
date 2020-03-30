@@ -143,9 +143,9 @@ K = 5  # number of CV folds
 run.feature.train = FALSE # process features for training set
 run.feature.test = FALSE # process features for test set
 
-run.train.gbm = TRUE # run gbm training model
-run.train.svm = TRUE # run svm training model
-run.train.xgb = TRUE # run xgb training model
+run.train.gbm = FALSE # run gbm training model
+run.train.svm = FALSE # run svm training model
+run.train.xgb = FALSE # run xgb training model
 ```
 
 The cross-validation method takes too much time, and the model we choose does not need it. Although it works well, we did not run it in this document.
