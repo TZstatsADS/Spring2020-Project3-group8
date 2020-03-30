@@ -131,7 +131,7 @@ In this chunk, we have a set of controls for the evaluation experiments.
 + (T/F) process model of training data
 
 ```{r}
-run.baseline = TRUE # run baseline feature, slow!
+run.baseline = TRUE # run baseline feature, training slow!
 
 run.dataprocess.fiducial_pt_list = FALSE # save fiducial_pt_list
 run.dataprocess.all_points = FALSE # save all_points, new data after rotate zoom and move
@@ -214,6 +214,7 @@ if(run.dataprocess.all_points){
   all_points = map(all_points, as.matrix)
   
   save(all_points, file = "../output/all_points.RData")
+  save(tm.run.all_points, file = "../output/tm.run.all_points.RData")
 }
 ```
 
@@ -300,12 +301,14 @@ if(run.baseline){
   if(run.feature.train){
     tm_feature_train_baseline <- system.time(dat_train_baseline <- feature_baseline(fiducial_pt_list, train_idx))
     save(dat_train_baseline, file="../output/feature_train_baseline.RData")
+    save(tm_feature_train_baseline, file="../output/tm_feature_train_baseline.RData")
   }
   
   tm_feature_test_baseline <- NA
   if(run.feature.test){
     tm_feature_test_baseline <- system.time(dat_test_baseline <- feature_baseline(fiducial_pt_list, test_idx))
     save(dat_test_baseline, file="../output/feature_test_baseline.RData")
+    save(tm_feature_test_baseline, file="../output/tm_feature_test_baseline.RData")
   }
 }
 
@@ -315,8 +318,11 @@ tm_feature_train_color <- NA
 if(run.feature.train){
   tm_feature_train <- system.time(dat_train <- feature(fiducial_pt_list, train_idx, image_file = "../data/train_set/images/", all_points, colorfeature = FALSE))
   save(dat_train, file="../output/feature_train.RData")
+  save(tm_feature_train, file="../output/tm_feature_train.RData")
+  
   tm_feature_train_color <- system.time(dat_train_color <- feature(fiducial_pt_list, train_idx, image_file = "../data/train_set/images/", all_points, colorfeature = TRUE))
   save(dat_train_color, file="../output/feature_train_color.RData")
+  save(tm_feature_train_color, file="../output/tm_feature_train_color.RData")
 }
 
 #time required for taking the features of test set using the updated feature function with and without the color feature
@@ -325,8 +331,11 @@ tm_feature_test_color <- NA
 if(run.feature.test){
   tm_feature_test <- system.time(dat_test <- feature(fiducial_pt_list, test_idx, image_file = "../data/train_set/images/", all_points, colorfeature = FALSE))
   save(dat_test, file="../output/feature_test.RData")
+  save(tm_feature_test, file="../output/tm_feature_test.RData")
+  
   tm_feature_test_color <- system.time(dat_test_color <- feature(fiducial_pt_list, test_idx, image_file = "../data/train_set/images/", all_points, colorfeature = TRUE))
   save(dat_test_color, file="../output/feature_test_color.RData")
+  save(tm_feature_test_color, file="../output/tm_feature_test_color.RData")
 }
 
 ```
@@ -348,6 +357,7 @@ if(run.baseline){
     gbm_model_baseline = gbm_result_train_baseline[[1]]
     tm.gbm.train_baseline = gbm_result_train_baseline[[2]]
     save(gbm_model_baseline, file="../output/gbm_model_baseline.RData")
+    save(tm.gbm.train_baseline, file="../output/tm.gbm.train_baseline.RData")
   }
 }
 ```
@@ -365,6 +375,7 @@ if(run.train.gbm){
   gbm_model = gbm_result_train[[1]]
   tm.gbm.train = gbm_result_train[[2]]
   save(gbm_model, file="../output/gbm_model.RData")
+  save(tm.gbm.train, file="../output/tm.gbm.train.RData")
 }
 ```
 
@@ -381,6 +392,7 @@ if(run.train.svm){
   svm_model = svm_result_train[[1]]
   tm.svm.train = svm_result_train[[2]]
   save(svm_model, file="../output/svm_model.RData")
+  save(tm.svm.train, file="../output/tm.svm.train.RData")
 }
 ```
 
@@ -426,6 +438,7 @@ if(run.train.xgb){
   xgb_model = xgb_result[[1]]
   tm.xgb.train = xgb_result[[2]]
   save(xgb_model, file="../output/xgb_model.RData")
+  save(tm.xgb.train, file="../output/tm.xgb.train.RData")
 }
 
 ```
@@ -442,6 +455,7 @@ if(run.train.gbm){
   gbm_model_color = gbm_result_train_color[[1]]
   tm.gbm.train_color = gbm_result_train_color[[2]]
   save(gbm_model_color, file="../output/gbm_model_color.RData")
+  save(tm.gbm.train_color, file="../output/tm.gbm.train_color.RData")
 }
 ```
 
@@ -457,6 +471,7 @@ if(run.train.svm){
   svm_model_color = svm_result_train_color[[1]]
   tm.svm.train_color = svm_result_train_color[[2]]
   save(svm_model_color, file="../output/svm_model_color.RData")
+  save(tm.svm.train_color, file="../output/tm.svm.train_color.RData")
 }
 ```
 
@@ -501,7 +516,8 @@ if(run.train.xgb){
     xgb_result_color = xgb_train(dat_train_color)
   xgb_model_color = xgb_result_color[[1]]
   tm.xgb.train_color = xgb_result_color[[2]]
-  save(svm_model, file="../output/xgb_model_color.RData")
+  save(xgb_model_color, file="../output/xgb_model_color.RData")
+  save(tm.xgb.train_color, file="../output/tm.xgb.train_color.RData")
 }
 
 ```
@@ -731,6 +747,24 @@ g_accuracy_test
 ### Summarize Running Time
 
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited. 
+
+```{r}
+load("../output/tm.run.all_points.RData")
+load("../output/tm_feature_train_baseline.RData")
+load("../output/tm_feature_test_baseline.RData")
+load("../output/tm_feature_train.RData")
+load("../output/tm_feature_train_color.RData")
+load("../output/tm_feature_test.RData")
+load("../output/tm_feature_test_color.RData")
+load("../output/tm.gbm.train_baseline.RData")
+load("../output/tm.gbm.train.RData")
+load("../output/tm.svm.train.RData")
+load("../output/tm.xgb.train.RData")
+load("../output/tm.gbm.train_color.RData")
+load("../output/tm.svm.train_color.RData")
+load("../output/tm.xgb.train_color.RData")
+```
+
 
 ```{r}
 #get a tibble of the running time, tm.train for the training and tm.test for the test
