@@ -2,5 +2,5 @@
 
 ### Output folder
 
-The output directory contains analysis output, processed datasets, logs, or other processed things.
+This folder contains the transformed data, the feature we extracted from the data,  the trained model, and the runing time of each model. 
 
