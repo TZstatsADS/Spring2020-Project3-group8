@@ -26,7 +26,7 @@ RAM: 16.00 GB (2400 MHz)
 | ------ | ------ | ------ | ------ | ------ | ------ | 
 | gbm_baseline | 44.7% | 1960s | 1961s | 13.3s | 13.4s |
 | gbm_improved | 47.7% | 42.9s | 67.2s | 0.03s | 5.92s | 
-| gbm_colored | 48.8% | 45.2s | 188s | 0.04s | 68.6s |
+| gbm_colored | 48.8% | 45.2s | 188s | 0.04s | 38.6s |
 | svm_improved | 57.1% | 2.39s | 26.7s | 0.20s | 6.09s |
 | svm_colored | 60.5% | 2.38s | 146s | 0.20s | 38.8s |
 | xgb_improved | 52.9% | 45.2s | 67.2s | 0.06s | 5.95s |
@@ -104,7 +104,7 @@ library(xgboost)
 
 ```{r , eval=FALSE}
 set.seed(1)
-setwd("~/Documents/GitHub/Spring2020-Project3-group8/doc")
+setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
 # here replace it with your own path or manually set it in RStudio to where this rmd file is located. 
 # use relative path for reproducibility
 ```
