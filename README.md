@@ -14,7 +14,15 @@ Term: Spring 2020
 	+ Ruiqi Xie
 	+ Wenjie Xie
 
-+ Final result
+
++ **Project summary**: In this project, our goal is to create an efficient classifier to classifity people's emotion on a given image. We pre-transformed the image to make all the faces verticle, standardized the length of the face based on a chosen reference, then transformed to make the nose center be the origin of the coordinates. Then we did feature choosing. We mainly chose the distance feature, angle feature, color feature to improve the accuracy and the feature has 129 dimensions without the color features and has 139 dimensions with the color feature. Finally we used GBM as baseline, improved it and used SVM and XGB model to train the model and get the prediction on the test sets. We compare between models based on the prediction accuracy and time complexity and decided that we would want to use SVM model with color features to be our final model. 
+
++ **Training data**: 2500 images of 230 people, each with corresponding 78 fiducial points. We split 80% of the people as training set and the remaining as the test set to do model selection.
+
++ **Test data**: another 2500 images of unknown number of people, which will be given 30 minutes prior to the class and we need to finish the prediction in 30 minutes. 
+
+
++ **Final result**
 
 |       | test accuracy | model training time | all training time | test prediction time | all prediction time | 
 | ------ | ------ | ------ | ------ | ------ | ------ | 
@@ -27,9 +35,6 @@ Term: Spring 2020
 | xgb_colored | 55.4% | 31.7s | 175s | 0.06s | 38.6s |
 
   
-
-+ Project summary: In this project, we created a classification engine for facial emotion recognition. We first did the data cleaning process. By zooming, rotating and choosing the poinnts, we put all the faces in the images horizontal. Then we did feature choosing.
-We mainly chose the distance feature, angle feature, color feature to improve the accuracy. Finally we used GBM as baseline, improved it and used SVM and XGB model to predict facial emotion. 
 	
 **Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
 
