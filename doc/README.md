@@ -6,7 +6,7 @@
 
 **Average_points**: the Rmd and html file of Average_points contains the plot of average 78 fiducial points of each emotion. From the pairwise comparison plot, we can get to see which of the distance features we want to keep and which of the angle features we want to add to the feature function.
 
-**Image_Rotation**: the Rmd and html file of Image_Rotation gives the procedure of rotating, zooming, and transforming the data we did before we extract the features.
+**Image_Rotation**: the Rmd and html file of Image_Rotation gives the procedure of rotating, zooming, and translating the data we did before we extract the features.
 
 **Inv Rotation**: this file gives the inverse function of image rotation. Since rotating all the image would take too much time, we would like to transform the 78 fiducial points, find the coordinates of the area we are interested in, use the inverse function to find the corresponding area on the nontransform image and get the color information.
 
