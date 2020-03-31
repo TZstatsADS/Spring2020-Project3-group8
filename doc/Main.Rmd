@@ -131,7 +131,7 @@ In this chunk, we have a set of controls for the evaluation experiments.
 + (T/F) process model of training data
 
 ```{r}
-run.baseline = TRUE # run baseline feature, training slow!
+run.baseline = FALSE # run baseline feature, training slow!
 
 run.dataprocess.fiducial_pt_list = FALSE # save fiducial_pt_list
 run.dataprocess.all_points = FALSE # save all_points, new data after rotate zoom and move
@@ -528,6 +528,8 @@ if(run.train.xgb){
 For each model we constructed, we use that model to make prediction on the test set, then we give the confusion matrix of the prediction and the predicting accuracy repectively. 
 
 ### 1.Baseline model with dist feature in GBM
+
+Due to the size limit of github. We can't upload 'gbm_model_baseline'. So we put the run.baseline to FALSE. If you want to run baseline. Please run model training of gbm in baseline first.
 
 ```{r}
 #prediction of the gbm model with only baseline features
