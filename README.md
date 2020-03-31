@@ -24,7 +24,7 @@ Term: Spring 2020
 
 + **Final result**
 
-|       | test accuracy | model training time | all training time | test prediction time | all prediction time | 
+|       | test accuracy | model training time | total training time | test prediction time | total prediction time | 
 | ------ | ------ | ------ | ------ | ------ | ------ | 
 | gbm_baseline | 45.6% | 1960s | 1961s | 13.3s | 13.4s |
 | gbm_improved | 46.2% | 42.9s | 67.2s | 0.03s | 5.92s | 
