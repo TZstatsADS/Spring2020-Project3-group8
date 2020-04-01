@@ -41,7 +41,7 @@ Term: Spring 2020
 + Vikki Sui:
 + Jinxu Xiang:
 + Ruiqi Xie: I participated the data cleaning process and feature extracting process. In the data cleaning process, I mainly drew the average image. In the feature extracting process, I extracted the color feature of eyebrows.
-+ Wenjie Xie: Extract detailed features by comparing differences between 220 facial expression category pairs
++ Wenjie Xie: Extract detailed eyebrows, eyes and nose position features by comparing differences between 220 facial expression category pairs(average img)
 
 Jinxu Xiang did the data pre-processing part which contains change_image function and the inverse function. These function rotate, zoom, and transfer the points and image to standardize them. He also created the average points and worked with Ruiqi Xie on ploting the average images, which help us visualized the defference between each pair of emotions. Everyone worked together on providing ideas of feature extraction and considering possible models. Wenjie Xie and Jiancong Shen compared the difference between 220 facial ecpression category pairs and added some improved features into the feature function. Vikki Sui constructed the base feature model and did the color feature for the nasolabials folds. Ruiqi Xie did the color feature for the wrinkle between eyebrows. Jinxu Xiang did the model training function, test function and the in class predicting function. Jinxu Xiang and Vikki Sui constructed the main.Rmd file including the model training, predicting, and diagnosis. 
 
