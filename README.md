@@ -17,6 +17,8 @@ Term: Spring 2020
 
 + **Project summary**: In this project, our goal is to create an efficient classifier to classifity people's emotion on a given image. We pre-transformed the image to make all the faces verticle, standardized the length of the face based on a chosen reference, then translated to make the nose center be the origin of the coordinates. Then we did feature choosing. We mainly chose the distance feature, angle feature, color feature to improve the accuracy and the feature has 129 dimensions without the color features and has 139 dimensions with the color feature. Finally we used GBM as baseline, improved it and used SVM and XGB model to train the model and get the prediction on the test sets. We compare between models based on the prediction accuracy and time complexity and decided that we would want to use SVM model with color features to be our final model. 
 
+            + The link to the full presentation is [here](https://drive.google.com/open?id=1Etw7MyvmSV-0R2BUFPqC3wIcLoSIDRlK)
+
 + **Training data**: 2500 images of 230 people, each with corresponding 78 fiducial points. We split 80% of the people as training set and the remaining as the test set to do model selection.
 
 + **Test data**: another 2500 images of unknown number of people, which will be given 30 minutes prior to the class and we need to finish the prediction in 30 minutes. 
