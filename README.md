@@ -41,7 +41,7 @@ Term: Spring 2020
 + Vikki Sui:
 + Jinxu Xiang:
 + Ruiqi Xie: I participated the data cleaning process and feature extracting process. In the data cleaning process, I mainly drew the average image. In the feature extracting process, I extracted the color feature of eyebrows.
-+ Wenjie Xie: Extract detailed features by comparing differences between 220 facial expression category pairs
++ Wenjie Xie: Extract detailed eyebrows, eyes and nose position features by comparing differences between 220 facial expression category pairs(average img)
 
 Following [suggestions](http://nicercode.github.io/blog/2013-04-05-projects/) by [RICH FITZJOHN](http://nicercode.github.io/about/#Team) (@richfitz). This folder is orgarnized as follows.
 
