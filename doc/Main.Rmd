@@ -29,7 +29,7 @@ RAM: 16.00 GB (2400 MHz)
 | gbm_colored | 48.8% | 45.2s | 188s | 0.04s | 38.6s |
 | svm_improved | 57.1% | 2.39s | 26.7s | 0.20s | 6.09s |
 | svm_colored | 60.5% | 2.38s | 146s | 0.20s | 38.8s |
-| xgb_improved | 52.9% | 45.2s | 67.2s | 0.06s | 5.95s |
+| xgb_improved | 52.9% | 45.2s | 69.5s | 0.06s | 5.95s |
 | xgb_colored | 56.3% | 31.7s | 175s | 0.06s | 38.6s |
 
 Based on the fact that the total training time is the sum of model training time, the feature extraction time, and the data processing time, we have the formula below:
