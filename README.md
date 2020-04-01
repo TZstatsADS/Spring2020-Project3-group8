@@ -19,12 +19,13 @@ Term: Spring 2020
 
 + The link to the full presentation is [here](https://drive.google.com/open?id=1Etw7MyvmSV-0R2BUFPqC3wIcLoSIDRlK)
 
-+ **Training data**: 2500 images of 230 people, each with corresponding 78 fiducial points. We split 80% of the people as training set and the remaining as the test set to do model selection. For in-class test, we use 2500 images with corresponding points as training set.
++ **Training data**: 2500 images of 230 people, each with corresponding 78 fiducial points. We split 80% of the people as training set and the remaining as the test set to do model selection. In this case, the number of training data is around 2000 and test data is the rest. For in-class test, we use 2500 images with corresponding points as training set.
 
 + **Test data**: another 2500 images of unknown number of people, which will be given 30 minutes prior to the class and we need to finish the prediction in 30 minutes. 
 
 
 + **Final result**
+The training time is time for training about 2000 data and the test time is time for predicting about 500 data.
 
 |       | test accuracy | model training time | total training time | test prediction time | total prediction time | 
 | ------ | ------ | ------ | ------ | ------ | ------ | 
