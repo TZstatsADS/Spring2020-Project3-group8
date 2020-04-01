@@ -87,6 +87,7 @@ if(run.build){
 
 ```{r}
 if(run.build){
+  source("../lib/feature.R")
   load("../output/fiducial_pt_list.RData")
   load("../output/all_points.RData")
   
@@ -107,6 +108,26 @@ if(run.build){
 }
 ```
 
+```{r}
+if(run.build){
+  source("../lib/feature_baseline.R")
+  load("../output/fiducial_pt_list.RData")
+  tm_feature_train_inclass_baseline <- system.time(dat_all_baseline <- feature_baseline(fiducial_pt_list, train_idx))
+  save(dat_all_baseline, file="../output/feature_all_baseline.RData")
+}
+```
+
+```{r}
+if(run.build){
+  source("../lib/train_gbm.R")
+  load("../output/feature_all_baseline.RData")
+  
+  baseline_result_all = gbm_train(dat_all_baseline, n.trees = 200, bag.fraction = 0.8, shrinkage = 0.1, cv.folds = 3)
+  baseline_all_model = baseline_result_all[[1]]
+  tm.all_baseline = baseline_result_all[[2]]
+  save(baseline_all_model, file="../output/baseline_all_model.RData")
+}
+```
 
 ## Step 1: Set inclass work directories
 
@@ -165,6 +186,17 @@ save(all_points_inclass, file = "../output/all_points_inclass.RData")
 
 ## Step 3: Feature extraction
 
+For baseline model
+
+```{r}
+source("../lib/feature_baseline.R")
+load("../output/fiducial_pt_list_inclass.RData")
+tm_feature_test_inclass_baseline <- system.time(dat_inclass_baseline <- feature_baseline(fiducial_pt_list_inclass, train_idx))
+save(dat_inclass_baseline, file="../output/feature_inclass_baseline.RData")
+```
+
+For improved model
+
 ```{r}
 source("../lib/feature.R")
 load("../output/all_points_inclass.RData")
@@ -174,6 +206,21 @@ save(dat_inclass, file="../output/feature_inclass.RData")
 ```
 
 ## Step 4: Predict in-class data.
+
+For baseline model
+
+```{r}
+source("../lib/test_GBM.R")
+load("../output/baseline_all_model.RData")
+load("../output/feature_inclass_baseline.RData")
+
+baseline_result_test_inclass = gbm_test(baseline_all_model, dat_inclass_baseline)
+baseline_pred_inclass = baseline_result_test_inclass[[1]]
+tm.baseline.test_inclass = baseline_result_test_inclass[[2]]
+baseline_pred_class_inclass = apply(baseline_pred_inclass, 1, which.max)
+```
+
+For improved model
 
 ```{r}
 source("../lib/test_SVM.R")
@@ -187,6 +234,24 @@ tm.svm.test_inclass = svm_result_test_inclass[[2]]
 
 ## Step 5: Conclusion
 
+For baseline model
+
+```{r}
+confusionMatrix(factor(baseline_pred_class_inclass), dat_inclass_baseline$emotion_idx)
+```
+
+```{r}
+baseline_accuracy_test_inclass = mean(dat_inclass_baseline$emotion_idx == baseline_pred_class_inclass)
+print(paste0("The accuracy for baseline model is: ", baseline_accuracy_test_inclass))
+```
+
+```{r}
+time_baseline = signif(tm_feature_test_inclass_baseline[3] + tm.baseline.test_inclass[3], 5)
+print(paste0("The test time for baseline model is ", time, ' s'))
+```
+
+For improved model
+
 ```{r}
 confusionMatrix(factor(svm_pred_class_inclass), dat_inclass$emotion_idx)
 ```
@@ -198,7 +263,7 @@ print(paste0("The accuracy for svm model is: ", svm_accuracy_test_inclass))
 
 ```{r}
 time = signif(tm_feature_test_inclass[3] + tm.svm.test_inclass[3], 5)
-print(paste0("The test time is ", time, ' s'))
+print(paste0("The test time for improved model is ", time, ' s'))
 ```
 
 
