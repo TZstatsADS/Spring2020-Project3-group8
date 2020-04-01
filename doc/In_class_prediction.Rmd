@@ -97,7 +97,7 @@ if(run.build){
 
 ```{r}
 if(run.build){
-  source("../xjx_lib/train_SVM.R")
+  source("../lib/train_SVM.R")
   load("../output/feature_all.RData")
   
   svm_result_all = svm_train(dat_all, kernel = 'poly', degree = 1, gamma = 0.008)
@@ -112,16 +112,16 @@ if(run.build){
 
 ```{r wkdir, eval=FALSE}
 set.seed(1)
-setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/xjx")
+setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
 # here replace it with your own path or manually set it in RStudio to where this rmd file is located. 
 # use relative path for reproducibility
 ```
 
 ```{r}
-test_dir <- "../data/test_set/" 
+test_dir <- "../data/test_set_predict/" 
 test_image_dir <- paste(test_dir, "images/", sep="")
 test_pt_dir <- paste(test_dir,  "points/", sep="")
-test_label_path <- paste(test_dir, "label.csv", sep="") 
+test_label_path <- paste(test_dir, "label_prediction.csv", sep="") 
 ```
 
 ## Step 2: Data reading and preprocessing
@@ -147,7 +147,7 @@ save(fiducial_pt_list_inclass, file="../output/fiducial_pt_list_inclass.RData")
 ```
 
 ```{r}
-source("../xjx_lib/change_images.R")
+source("../lib/change_images.R")
 load("../output/fiducial_pt_list_inclass.RData")
   
 single = c(35,36,37,38,44,52,56,59,62)
@@ -166,7 +166,7 @@ save(all_points_inclass, file = "../output/all_points_inclass.RData")
 ## Step 3: Feature extraction
 
 ```{r}
-source("../xjx_lib/feature.R")
+source("../lib/feature.R")
 load("../output/all_points_inclass.RData")
 
 tm_feature_test_inclass <- system.time(dat_inclass <- feature(fiducial_pt_list_inclass, test_idx, image_file = "../data/test_set/images/", all_points_inclass, colorfeature = TRUE))
@@ -176,7 +176,7 @@ save(dat_inclass, file="../output/feature_inclass.RData")
 ## Step 4: Predict in-class data.
 
 ```{r}
-source("../xjx_lib/test_SVM.R")
+source("../lib/test_SVM.R")
 load("../output/svm_model_inclass.RData")
 load("../output/feature_inclass.RData")
 

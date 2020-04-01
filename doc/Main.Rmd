@@ -551,7 +551,9 @@ if(run.baseline){
 
 ```{r cm gbm baseline}
 #get the confusion matrix of the prediction
-confusionMatrix(factor(gbm_pred_class_baseline), dat_test_baseline$emotion_idx)
+if(run.baseline){
+  confusionMatrix(factor(gbm_pred_class_baseline), dat_test_baseline$emotion_idx)
+}
 ```
 
 ```{r pa gbm baseline}
