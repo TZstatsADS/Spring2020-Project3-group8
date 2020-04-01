@@ -23,8 +23,7 @@ Term: Spring 2020
 
 + **Test data**: Another 2500 images of unknown number of people, which will be given 30 minutes prior to the class and we need to finish the prediction in 30 minutes. We predict that the calculation will be completed within 5 minutes and reach 58% accuracy.
 
-
-+ **Final result**
++ **Final result**:
 The training time is time for training about 2000 data and the test time is time for predicting about 500 data.
 
 |       | test accuracy | model training time | total training time | test prediction time | total prediction time | 
