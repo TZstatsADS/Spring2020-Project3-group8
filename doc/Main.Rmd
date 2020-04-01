@@ -44,7 +44,11 @@ The improved feature contains 129 features extracted from 78 points' position. T
 
 We extract color feature and use the svm classifier as our improved model. Since there is no other results affect our judgment of in-class tests. We predict the final accuracy of in-class test to be 58%.
 
-```{r message=FALSE}
+### Difference between Rmd and Html
+
+Since the baseline model is large, we can't upload it to github, so we set the run.baseline to false after knit. If you need to run Rmd, the result will be slightly different, it will not contain baseline model, but the rest part is same as Html file. If you want to see the result of baseline, you have to set run.baseline and run.train.gbm to true, it will take more than half an hour to calculate. Moreover, before running Rmd, you should change setwd() below to your path.
+
+```{r library, message=FALSE}
 if(!require("EBImage")){
   source("https://bioconductor.org/biocLite.R")
   biocLite("EBImage")
@@ -102,7 +106,7 @@ library(xgboost)
 
 ## Step 0 set work directories
 
-```{r , eval=FALSE}
+```{r set wd and seed, eval=FALSE}
 set.seed(1)
 setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
 # here replace it with your own path or manually set it in RStudio to where this rmd file is located. 
@@ -111,7 +115,7 @@ setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/do
 
 Provide directories for training images. Training images and training fiducial points will be in different subfolders. 
 
-```{r}
+```{r data path}
 train_dir <- "../data/train_set/" # This will be modified for different data sets.
 train_image_dir <- paste(train_dir, "images/", sep="")
 train_pt_dir <- paste(train_dir,  "points/", sep="")
@@ -130,7 +134,7 @@ In this chunk, we have a set of controls for the evaluation experiments.
 + (T/F) process features for training and test set
 + (T/F) process model of training data
 
-```{r}
+```{r boolean value}
 run.baseline = FALSE # run baseline feature, training slow!
 
 run.dataprocess.fiducial_pt_list = FALSE # save fiducial_pt_list
@@ -158,7 +162,7 @@ However, we only have 2500 pictures and 230 people, which is not enough for accu
 
 This effect is limited to the tests in this document. The tests we need to do will use all 2,500 training sets, the expectations and variances mentioned above have nothing to do with it.
 
-```{r}
+```{r train and test data}
 #train-test split
 info <- read.csv(train_label_path)
 n <- length(info$identity %>% unique())
@@ -173,7 +177,7 @@ train_idx <- sample(train_idx, length(train_idx), replace = F)
 
 Fiducial points are stored in matlab format. In this step, we read them and store them in a list.
 
-```{r}
+```{r dp fpl}
 #function to read fiducial points
 #input: index
 #output: matrix of fiducial points corresponding to the index
@@ -190,7 +194,7 @@ if(run.dataprocess.fiducial_pt_list){
 }
 ```
 
-```{r}
+```{r dp allp}
 #function to rotate, translate, zoom the fiducial points to standardize all the points
 #take the middle height of two eyes and the height of nose center to standardize this distance to be 170
 
@@ -218,7 +222,7 @@ if(run.dataprocess.all_points){
 }
 ```
 
-```{r}
+```{r dp avep}
 #data manipulation to find the average points of each emotion, in order to find more detailed differences of each emotion
 #input: all_points
 #output: ave_points
@@ -242,7 +246,7 @@ if(run.dataprocess.ave_points){
 }
 ```
 
-```{r}
+```{r dp dist and dp}
 if(run.dataprocess.diff_points){
   
   load("../output/all_points.RData")
@@ -290,7 +294,7 @@ load("../output/distance.Rdata")
 
 + we will also the features into the output folder
 
-```{r}
+```{r feature extraction}
 source("../lib/feature_baseline.R")
 source("../lib/feature.R")
 load("../output/all_points.RData")
@@ -346,7 +350,7 @@ In this step, we will train the model using GBM, SVM, and XGB, respectively usin
 
 ### 1.Baseline model with dist feature in GBM
 
-```{r}
+```{r train gbm baseline}
 #use the baseline features to train the gbm model, get the model called gbm_model_baseline and the time used called tm.gbm.train_baseline
 #save the output model into the output
 if(run.baseline){
@@ -364,7 +368,7 @@ if(run.baseline){
 
 ### 2.Improved feature in GBM
 
-```{r}
+```{r train gbm improved}
 #use the improved features to train the gbm model, get the model called gbm_model and the time used called tm.gbm.train
 #save the output model into the output
 if(run.train.gbm){
@@ -381,7 +385,7 @@ if(run.train.gbm){
 
 ### 3.Improved feature in SVM
 
-```{r}
+```{r train svm improved}
 #use the improved features to train the svm model, get the model called svm_model and the timeused called tm.svm.train
 #save the output model into the output
 if(run.train.svm){
@@ -398,7 +402,7 @@ if(run.train.svm){
 
 ### 4.Improved feature in XGB
 
-```{r}
+```{r train xgb improved cv1}
 #use cross validation to find the best parameter for the xgb model
 if(run.cv & run.train.xgb){
   source("../lib/xgb_tune.R")
@@ -414,7 +418,7 @@ if(run.cv & run.train.xgb){
 }
 ```
 
-```{r}
+```{r train xgb improved cv2}
 if(run.cv & run.train.xgb){
   colnames(xgb_err_tune) = c(3,5,10)
   xgb_err_tune = gather(xgb_err_tune, key = "min_child")
@@ -425,7 +429,7 @@ if(run.cv & run.train.xgb){
 }
 ```
 
-```{r}
+```{r train xgb improved}
 #fit the xgb model with the best parameter if we use cross validation and with default if we do not use cross validation, and save the xgb_model into the output folder
 if(run.train.xgb){
   source("../lib/xgb_train.R")
@@ -445,7 +449,7 @@ if(run.train.xgb){
 
 ### 5.Improved feature with color in GBM
 
-```{r}
+```{r train gbm colored}
 #use the features with colors to train the gbm model called gbm_model_color, and save the model into output folder
 if(run.train.gbm){
   source("../lib/train_gbm.R")
@@ -461,7 +465,7 @@ if(run.train.gbm){
 
 ### 6.Improved feature with color in SVM
 
-```{r}
+```{r train svm colored}
 #use the features with colors to train the svm model called svm_model_color and save the model into output folder
 if(run.train.svm){
   source("../lib/train_SVM.R")
@@ -477,7 +481,7 @@ if(run.train.svm){
 
 ### 7.Improved feature with color in XGB
 
-```{r}
+```{r train xgb colored cv1}
 #We can choose to use cross validation or not. If yes, we will need to run the two chunks below and get the best parameters, if not, we can skip the cross validation steps
 if(run.cv & run.train.xgb){
   source("../lib/xgb_tune.R")
@@ -493,7 +497,7 @@ if(run.cv & run.train.xgb){
 }
 ```
 
-```{r}
+```{r train xgb colored cv2}
 if(run.cv & run.train.xgb){
   colnames(xgb_err_tune_color) = c(3,5,10)
   xgb_err_tune_color = gather(xgb_err_tune_color, key = "min_child")
@@ -504,7 +508,7 @@ if(run.cv & run.train.xgb){
 }
 ```
 
-```{r}
+```{r train xgb colored}
 #use the features with colors to train the xgb model called xgb_model_color and save the model into the output folder
 if(run.train.xgb){
   source("../lib/xgb_train.R")
@@ -531,7 +535,7 @@ For each model we constructed, we use that model to make prediction on the test 
 
 Due to the size limit of github. We can't upload 'gbm_model_baseline'. So we put the run.baseline to FALSE. If you want to run baseline. Please run model training of gbm in baseline first.
 
-```{r}
+```{r test gbm baseline}
 #prediction of the gbm model with only baseline features
 if(run.baseline){
   source("../lib/test_gbm.R")
@@ -545,12 +549,12 @@ if(run.baseline){
 }
 ```
 
-```{r}
+```{r cm gbm baseline}
 #get the confusion matrix of the prediction
 confusionMatrix(factor(gbm_pred_class_baseline), dat_test_baseline$emotion_idx)
 ```
 
-```{r}
+```{r pa gbm baseline}
 #accuracy of the above gbm model
 if(run.baseline){
   gbm_accuracy_test_baseline = mean(dat_test_baseline$emotion_idx == gbm_pred_class_baseline)
@@ -560,7 +564,7 @@ if(run.baseline){
 
 ### 2.Improved feature in GBM
 
-```{r}
+```{r test gbm improved}
 #prediction of the gbm model with improved features
 source("../lib/test_gbm.R")
 load("../output/gbm_model.RData")
@@ -572,12 +576,12 @@ tm.gbm.test = gbm_result_test[[2]]
 gbm_pred_class = apply(gbm_pred, 1, which.max)
 ```
 
-```{r}
+```{r cm gbm improved}
 #get the confusion matrix of the prediction
 confusionMatrix(factor(gbm_pred_class), dat_test$emotion_idx)
 ```
 
-```{r}
+```{r pa gbm improved}
 #get the accuracy of the prediction of gmb model with improved features
 gbm_accuracy_test = mean(dat_test$emotion_idx == gbm_pred_class)
 print(paste0("The accuracy for gbm model is: ", gbm_accuracy_test))
@@ -585,7 +589,7 @@ print(paste0("The accuracy for gbm model is: ", gbm_accuracy_test))
 
 ### 3.Improved feature in SVM
 
-```{r}
+```{r test svm improved}
 #prediction of the svm model with improved features
 source("../lib/test_SVM.R")
 load("../output/svm_model.RData")
@@ -596,12 +600,12 @@ svm_pred_class = svm_result_test[[1]]
 tm.svm.test = svm_result_test[[2]]
 ```
 
-```{r}
+```{r cm svm improved}
 #get the confusion matrix of the prediction
 confusionMatrix(factor(svm_pred_class), dat_test$emotion_idx)
 ```
 
-```{r}
+```{r pa svm improved}
 #get the accuracy of the prediction of the svm model with improved features
 svm_accuracy_test = mean(dat_test$emotion_idx == svm_pred_class)
 print(paste0("The accuracy for svm model is: ", svm_accuracy_test))
@@ -609,7 +613,7 @@ print(paste0("The accuracy for svm model is: ", svm_accuracy_test))
 
 ### 4.Improved feature in XGB
 
-```{r}
+```{r test xgb improved}
 #prediction of the xgb model with improved features
 source("../lib/xgb_test.R")
 load("../output/xgb_model.RData")
@@ -621,12 +625,12 @@ tm.xgb.test = xgb_result_test[[2]]
 xgb_pred_class = apply(xgb_pred, 1, which.max)-1
 ```
 
-```{r}
+```{r cm xgb improved}
 #get the confusion matrix of the prediction
 confusionMatrix(factor(xgb_pred_class), dat_test$emotion_idx)
 ```
 
-```{r}
+```{r pa xgb improved}
 #get the accuracy of the prediction of the xgb model with improved features
 xgb_accuracy_test = mean(dat_test$emotion_idx == xgb_pred_class)
 print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test))
@@ -634,7 +638,7 @@ print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test))
 
 ### 5.Improved feature with color in GBM
 
-```{r}
+```{r test gbm colored}
 #prediction of the gbm model with improved features and colors features
 source("../lib/test_gbm.R")
 load("../output/gbm_model_color.RData")
@@ -646,12 +650,12 @@ tm.gbm.test_color = gbm_result_test_color[[2]]
 gbm_pred_class_color = apply(gbm_pred_color, 1, which.max)
 ```
 
-```{r}
+```{r cm gbm colored}
 #get the confusion matrix of the prediction
 confusionMatrix(factor(gbm_pred_class_color), dat_test_color$emotion_idx)
 ```
 
-```{r}
+```{r pa gbm colored}
 #get the accuracy of the prediction of the gbm model with improved features and color features
 gbm_accuracy_test_color = mean(dat_test_color$emotion_idx == gbm_pred_class_color)
 print(paste0("The accuracy for gbm model is: ", gbm_accuracy_test_color))
@@ -659,7 +663,7 @@ print(paste0("The accuracy for gbm model is: ", gbm_accuracy_test_color))
 
 ### 6.Improved feature with color in SVM
 
-```{r}
+```{r test svm colored}
 #prediction of the svm model with improved features and colors features
 source("../lib/test_SVM.R")
 load("../output/svm_model_color.RData")
@@ -670,12 +674,12 @@ svm_pred_class_color = svm_result_test_color[[1]]
 tm.svm.test_color = svm_result_test_color[[2]]
 ```
 
-```{r}
+```{r cm svm colored}
 #get the confusion matrix of the prediction
 confusionMatrix(factor(svm_pred_class_color), dat_test_color$emotion_idx)
 ```
 
-```{r}
+```{r pa svm colored}
 #get the accuracy of the prediction of the gbm model with improved features and color features
 svm_accuracy_test_color = mean(dat_test_color$emotion_idx == svm_pred_class_color)
 print(paste0("The accuracy for svm model is: ", svm_accuracy_test_color))
@@ -683,7 +687,7 @@ print(paste0("The accuracy for svm model is: ", svm_accuracy_test_color))
 
 ### 7.Improved feature with color in XGB
 
-```{r}
+```{r test xgb colored}
 #prediction of the xgb model with improved features and colors features
 source("../lib/xgb_test.R")
 load("../output/xgb_model_color.RData")
@@ -695,12 +699,12 @@ tm.xgb.test_color = xgb_result_test_color[[2]]
 xgb_pred_class_color = apply(xgb_pred_color, 1, which.max)-1
 ```
 
-```{r}
+```{r cm xgb colored}
 #get the confusion matrix of the prediction
 confusionMatrix(factor(xgb_pred_class_color), dat_test_color$emotion_idx)
 ```
 
-```{r}
+```{r pa xgb colored}
 #get the accuracy of the prediction of the gbm model with improved features and color features
 xgb_accuracy_test_color = mean(dat_test_color$emotion_idx == xgb_pred_class_color)
 print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test_color))
@@ -708,14 +712,14 @@ print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test_color))
 
 ### Summarize Accuracy
 
-```{r}
+```{r my theme}
 my_theme = theme_light() + 
   theme(plot.title = element_text(hjust = 0.5), 
         plot.subtitle = element_text(hjust = 0.5)) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 0.5, vjust = 0.5)) 
 ```
 
-```{r}
+```{r ta vector}
 #create a tibble of predict accuracy of each model
 if(run.baseline){
   accuracy_test = tibble(gbm_baseline = gbm_accuracy_test_baseline, 
@@ -735,7 +739,7 @@ if(run.baseline){
 }
 ```
 
-```{r}
+```{r ta graph}
 g_accuracy_test = accuracy_test %>% pivot_longer(1:ncol(accuracy_test))%>% 
   ggplot(aes(x = name, fill = name)) +
   geom_bar(aes(weight = value)) + 
@@ -750,7 +754,7 @@ g_accuracy_test
 
 Prediction performance matters, so does the running times for constructing features and for training the model, especially when the computation resource is limited, we would want a model woth relatively high accuracy and relatively low running time. 
 
-```{r}
+```{r load tm}
 load("../output/tm.run.all_points.RData")
 load("../output/tm_feature_train_baseline.RData")
 load("../output/tm_feature_test_baseline.RData")
@@ -768,7 +772,7 @@ load("../output/tm.xgb.train_color.RData")
 ```
 
 
-```{r}
+```{r tm not with}
 #get a tibble of the running time, tm.train for the training and tm.test for the test
 if(run.baseline){
   tm.train = tibble(gbm_baseline = tm.gbm.train_baseline[3], 
@@ -803,7 +807,7 @@ if(run.baseline){
 
 ```
 
-```{r}
+```{r tm with}
 #get a tibble of the total running time which used the formula at the begining of the report
 #for training, total running time is the sum of data manipulation, extraction of features, and trainig
 #for test, the total running time is the sum of data manipulation, extraction of feature, and testing
@@ -842,7 +846,7 @@ if(run.baseline){
 
 #### Training time without feature extraction
 
-```{r}
+```{r train tm graph not with}
 #plot the train time without feature extraction
 g_time_train = tm.train %>% pivot_longer(1:ncol(tm.train)) %>% 
   ggplot(aes(x = name, fill = name)) +
@@ -857,7 +861,7 @@ g_time_train
 
 #### Training time with feature extraction
 
-```{r}
+```{r train tm graph with}
 #plot the train time with feature extraction
 g_time_train_with = tm.train.with %>% pivot_longer(1:ncol(tm.train.with)) %>% 
   ggplot(aes(x = name, fill = name)) +
@@ -872,7 +876,7 @@ g_time_train_with
 
 #### Test time without feature extraction
 
-```{r}
+```{r test tm graph not with}
 #plot the test time without feature extraction
 g_time_test = tm.test %>% pivot_longer(1:ncol(tm.test)) %>% 
   ggplot(aes(x = name, fill = name)) +
@@ -887,7 +891,7 @@ g_time_test
 
 #### Test time with feature extraction
 
-```{r}
+```{r test tm graph with}
 #plot the test time with feature extraction
 g_time_test_with = tm.test.with %>% pivot_longer(1:ncol(tm.test.with)) %>% 
   ggplot(aes(x = name, fill = name)) +
