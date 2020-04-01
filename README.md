@@ -31,7 +31,7 @@ Term: Spring 2020
 | gbm_colored | 48.1% | 45.2s | 188s | 0.04s | 38.6s |
 | svm_improved | 57.1% | 2.39s | 26.7s | 0.20s | 6.09s |
 | svm_colored | 60.5% | 2.38s | 146s | 0.20s | 38.8s |
-| xgb_improved | 52.9% | 45.2s | 67.2s | 0.06s | 5.95s |
+| xgb_improved | 52.9% | 45.2s | 69.5s | 0.06s | 5.95s |
 | xgb_colored | 55.4% | 31.7s | 175s | 0.06s | 38.6s |
 
   
