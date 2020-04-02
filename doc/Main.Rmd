@@ -4,6 +4,7 @@ author: "Jiancong Shen, Vikki Sui, Jinxu Xiang, Ruiqi Xie, Wenjie Xie"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 ## Abstract
@@ -711,6 +712,8 @@ confusionMatrix(factor(xgb_pred_class_color), dat_test_color$emotion_idx)
 xgb_accuracy_test_color = mean(dat_test_color$emotion_idx == xgb_pred_class_color)
 print(paste0("The accuracy for xgb model is: ", xgb_accuracy_test_color))
 ```
+
+## Step 6: Conclusion
 
 ### Summarize Accuracy
 

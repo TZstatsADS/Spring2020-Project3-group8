@@ -66,10 +66,11 @@ library(xgboost)
 ## Step 0: Build train model
 
 ```{r}
-run.build = TRUE
+run.build = FALSE
+run.save = FALSE
 ```
 
-```{r wkdir, eval=FALSE}
+```{r}
 if(run.build){
   set.seed(1)
   setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
@@ -131,7 +132,7 @@ if(run.build){
 
 ## Step 1: Set inclass work directories
 
-```{r wkdir, eval=FALSE}
+```{r}
 set.seed(1)
 setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/doc")
 # here replace it with your own path or manually set it in RStudio to where this rmd file is located. 
@@ -142,7 +143,7 @@ setwd("C:/course/5243 Applied Data Science/Project/Spring2020-Project3-group8/do
 test_dir <- "../data/test_set_predict/" 
 test_image_dir <- paste(test_dir, "images/", sep="")
 test_pt_dir <- paste(test_dir,  "points/", sep="")
-test_label_path <- paste(test_dir, "label_prediction.csv", sep="") 
+test_label_path <- paste(test_dir, "labels_prediction.csv", sep="") 
 ```
 
 ## Step 2: Data reading and preprocessing
@@ -191,7 +192,7 @@ For baseline model
 ```{r}
 source("../lib/feature_baseline.R")
 load("../output/fiducial_pt_list_inclass.RData")
-tm_feature_test_inclass_baseline <- system.time(dat_inclass_baseline <- feature_baseline(fiducial_pt_list_inclass, train_idx))
+tm_feature_test_inclass_baseline <- system.time(dat_inclass_baseline <- feature_baseline(fiducial_pt_list_inclass, test_idx, inclass = TRUE))
 save(dat_inclass_baseline, file="../output/feature_inclass_baseline.RData")
 ```
 
@@ -201,7 +202,7 @@ For improved model
 source("../lib/feature.R")
 load("../output/all_points_inclass.RData")
 
-tm_feature_test_inclass <- system.time(dat_inclass <- feature(fiducial_pt_list_inclass, test_idx, image_file = "../data/test_set/images/", all_points_inclass, colorfeature = TRUE))
+tm_feature_test_inclass <- system.time(dat_inclass <- feature(fiducial_pt_list_inclass, test_idx, image_file = "../data/test_set_predict/images/", all_points_inclass, colorfeature = TRUE, inclass = TRUE))
 save(dat_inclass, file="../output/feature_inclass.RData")
 ```
 
@@ -224,10 +225,10 @@ For improved model
 
 ```{r}
 source("../lib/test_SVM.R")
-load("../output/svm_model_inclass.RData")
+load("../output/svm_model_all.RData")
 load("../output/feature_inclass.RData")
 
-svm_result_test_inclass = svm_test(svm_model_inclass, dat_inclass)
+svm_result_test_inclass = svm_test(svm_model_all, dat_inclass)
 svm_pred_class_inclass = svm_result_test_inclass[[1]]
 tm.svm.test_inclass = svm_result_test_inclass[[2]]
 ```
@@ -237,28 +238,28 @@ tm.svm.test_inclass = svm_result_test_inclass[[2]]
 For baseline model
 
 ```{r}
-confusionMatrix(factor(baseline_pred_class_inclass), dat_inclass_baseline$emotion_idx)
+#confusionMatrix(factor(baseline_pred_class_inclass), dat_inclass_baseline$emotion_idx)
 ```
 
 ```{r}
-baseline_accuracy_test_inclass = mean(dat_inclass_baseline$emotion_idx == baseline_pred_class_inclass)
-print(paste0("The accuracy for baseline model is: ", baseline_accuracy_test_inclass))
+#baseline_accuracy_test_inclass = mean(dat_inclass_baseline$emotion_idx == baseline_pred_class_inclass)
+#print(paste0("The accuracy for baseline model is: ", baseline_accuracy_test_inclass))
 ```
 
 ```{r}
 time_baseline = signif(tm_feature_test_inclass_baseline[3] + tm.baseline.test_inclass[3], 5)
-print(paste0("The test time for baseline model is ", time, ' s'))
+print(paste0("The test time for baseline model is ", time_baseline, ' s'))
 ```
 
 For improved model
 
 ```{r}
-confusionMatrix(factor(svm_pred_class_inclass), dat_inclass$emotion_idx)
+#confusionMatrix(factor(svm_pred_class_inclass), dat_inclass$emotion_idx)
 ```
 
 ```{r}
-svm_accuracy_test_inclass = mean(dat_inclass$emotion_idx == svm_pred_class_inclass)
-print(paste0("The accuracy for svm model is: ", svm_accuracy_test_inclass))
+#svm_accuracy_test_inclass = mean(dat_inclass$emotion_idx == svm_pred_class_inclass)
+#print(paste0("The accuracy for svm model is: ", svm_accuracy_test_inclass))
 ```
 
 ```{r}
@@ -266,6 +267,14 @@ time = signif(tm_feature_test_inclass[3] + tm.svm.test_inclass[3], 5)
 print(paste0("The test time for improved model is ", time, ' s'))
 ```
 
+## Step 6: Save result
+
+```{r}
+if(run.save){
+  save_result = data.frame(Index = test_idx, Baseline = baseline_pred_class_inclass, Advanced = svm_pred_class_inclass)
+  write.csv(save_result, file = "../data/test_set_predict/labels_prediction.csv",  row.names = T)
+}
+```
 
 
 

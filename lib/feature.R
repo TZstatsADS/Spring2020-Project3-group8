@@ -5,7 +5,7 @@
 source("../lib/change_images.R")
 source("../lib/inv_change_images.R")
 
-feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", test = all_points, colorfeature = FALSE){
+feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/train_set/images/", test = all_points, colorfeature = FALSE, inclass = FALSE){
   # input_list: 
   #   Default: fiducial_pt_list
   #   A list Which indicates the original points position
@@ -409,10 +409,15 @@ feature <- function(input_list = fiducial_pt_list, index, image_file = "../data/
   }
   
   # Rename features
-  colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
-  feature_withemo_data <- as.data.frame(feature_withemo_data)
-  feature_withemo_data$emotion_idx <- as.factor(feature_withemo_data$emotion_idx)
-  
+  if(!inclass){
+    colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)-1), sep = ""), "emotion_idx")
+    feature_withemo_data <- as.data.frame(feature_withemo_data)
+    feature_withemo_data$emotion_idx <- as.factor(feature_withemo_data$emotion_idx)
+  }else{
+    colnames(feature_withemo_data) <- c(paste("feature", 1:(ncol(feature_withemo_data)), sep = ""))
+    feature_withemo_data <- as.data.frame(feature_withemo_data)
+  }
+
   # Return features
   return(feature_df = feature_withemo_data)
 }
